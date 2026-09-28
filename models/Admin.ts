@@ -1,5 +1,5 @@
 import { Schema, model, models, type Model, type Types } from "mongoose";
-
+//test
 export interface AdminDoc {
   _id: Types.ObjectId;
   username: string;
@@ -14,7 +14,14 @@ export interface AdminDoc {
 
 const AdminSchema = new Schema<AdminDoc>(
   {
-    username: { type: String, required: true, unique: true, lowercase: true, trim: true, maxlength: 64 },
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      maxlength: 64,
+    },
     passwordHash: { type: String, required: true },
     role: { type: String, enum: ["admin"], required: true, default: "admin" },
     tokenVersion: { type: Number, required: true, default: 0 },
@@ -24,4 +31,5 @@ const AdminSchema = new Schema<AdminDoc>(
 );
 
 export const Admin: Model<AdminDoc> =
-  (models.Admin as Model<AdminDoc> | undefined) ?? model<AdminDoc>("Admin", AdminSchema);
+  (models.Admin as Model<AdminDoc> | undefined) ??
+  model<AdminDoc>("Admin", AdminSchema);
