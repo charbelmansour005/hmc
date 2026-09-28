@@ -1,5 +1,4 @@
 import { Schema, model, models, type Model, type Types } from "mongoose";
-//test
 export interface AdminDoc {
   _id: Types.ObjectId;
   username: string;
