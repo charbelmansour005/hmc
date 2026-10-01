@@ -90,7 +90,12 @@ export type HomeSection = {
   features: PublicServiceItem[];
 };
 
-export type NavLink = { href: string; label: string };
+export type NavLink = {
+  href: string;
+  label: string;
+  /** Section ids that also mark this link as the one being read (header only). */
+  match?: string[];
+};
 
 /** One Google review, reduced to what the reviews section renders. */
 export type GoogleReviewDTO = {
@@ -129,6 +134,8 @@ export type HomeContent = {
   clinics: PublicClinicItem[];
   doctors: DoctorDTO[];
   bookingGroups: BookingGroup[];
-  specialistCount: number;
+  /** Full section list (footer). */
   nav: NavLink[];
+  /** The shorter header nav: every service section is grouped under "Services". */
+  headerNav: NavLink[];
 };

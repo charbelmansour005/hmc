@@ -1,17 +1,31 @@
+import { CATEGORY_META } from "@/lib/categories";
 import { telHref } from "@/lib/home-content";
-import type { SettingsDTO } from "@/lib/types";
+import type { HomeSection, SettingsDTO } from "@/lib/types";
 import { BookingCard } from "./BookingCard";
-import { BuildingIcon, CalendarIcon, ClockIcon, PinIcon } from "./icons";
+import { ClockIcon, PhoneIcon, PinIcon } from "./icons";
 import { OpeningHours } from "./OpeningHours";
 
-const HEADLINE = "Comprehensive, human-centered care – under one roof";
+// The no-break space keeps the dash with "care" rather than opening a line.
+const HEADLINE = "Comprehensive, human-centered care\u00a0– under one roof";
 
 // The hero entrance is pure CSS (see site.css): it starts on first paint rather
 // than after hydration, so the headline is never held back waiting for
 // JavaScript. Each word gets its index (--i) to stagger the reveal.
 const at = (i: number) => ({ "--i": i }) as React.CSSProperties;
 
-export function Hero({ settings, specialistCount }: { settings: SettingsDTO; specialistCount: number }) {
+/** "Internal & General Medicine, Allergist and 10 more" from a section's services. */
+function summary(section: HomeSection): string {
+  const names = [...section.cards, ...section.features].map((item) => item.name);
+  const shown = names.slice(0, 2).join(", ");
+  return names.length > 2 ? `${shown} and ${names.length - 2} more` : shown;
+}
+
+function count(section: HomeSection): string {
+  const n = section.cards.length + section.features.length;
+  return n === 1 ? "1 service" : `${n} services`;
+}
+
+export function Hero({ settings, sections }: { settings: SettingsDTO; sections: HomeSection[] }) {
   return (
     <section className="hero">
       <div className="container">
@@ -27,17 +41,25 @@ export function Hero({ settings, specialistCount }: { settings: SettingsDTO; spe
               ))}
             </h1>
             <p className="hero-lede">
-              Specialist medicine, dentistry, nutrition, esthetics and rehabilitation together in Naccache – so
+              Specialist medicine, dentistry, nutrition, esthetics and rehabilitation together in Naccache, so
               your whole family&apos;s care lives in one place.
             </p>
-            <div className="hero-actions">
-              <a className="btn btn-primary" href="#book">
-                Book an appointment
-              </a>
-              <a className="btn btn-light" href={telHref(settings.phone)}>
-                Call {settings.phone}
-              </a>
-            </div>
+            <ul className="hero-facts">
+              {settings.openingHours ? (
+                <li>
+                  <ClockIcon aria-hidden />
+                  <OpeningHours value={settings.openingHours} />
+                </li>
+              ) : null}
+              <li>
+                <PinIcon aria-hidden />
+                Naccache, Lebanon. Walk-ins welcome.
+              </li>
+              <li>
+                <PhoneIcon aria-hidden />
+                <a href={telHref(settings.phone)}>{settings.phone}</a>
+              </li>
+            </ul>
           </div>
 
           <div className="hero-card">
@@ -45,32 +67,25 @@ export function Hero({ settings, specialistCount }: { settings: SettingsDTO; spe
           </div>
         </div>
 
-        <ul className="highlights">
-          <li className="highlight" style={at(0)}>
-            <span className="highlight-icon" aria-hidden="true">
-              <BuildingIcon />
-            </span>
-            {specialistCount} specialties, one address
-          </li>
-          <li className="highlight" style={at(1)}>
-            <span className="highlight-icon" aria-hidden="true">
-              <PinIcon />
-            </span>
-            Naccache, Lebanon
-          </li>
-          <li className="highlight" style={at(2)}>
-            <span className="highlight-icon" aria-hidden="true">
-              <ClockIcon />
-            </span>
-            {settings.openingHours ? <OpeningHours value={settings.openingHours} /> : "[Opening hours]"}
-          </li>
-          <li className="highlight" style={at(3)}>
-            <span className="highlight-icon" aria-hidden="true">
-              <CalendarIcon />
-            </span>
-            Walk-ins &amp; appointments
-          </li>
-        </ul>
+        {sections.length > 0 ? (
+          // The lobby directory: every department at a glance, each one a jump to its section.
+          <nav className="directory" id="services" aria-labelledby="directory-title">
+            <h2 id="directory-title" className="visually-hidden">
+              Departments
+            </h2>
+            <ul>
+              {sections.map((section, i) => (
+                <li key={section.anchor} style={at(i)}>
+                  <a href={`#${section.anchor}`}>
+                    <span className="directory-name">{CATEGORY_META[section.category].navLabel}</span>
+                    <span className="directory-items">{summary(section)}</span>
+                    <span className="directory-count">{count(section)}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        ) : null}
       </div>
     </section>
   );
