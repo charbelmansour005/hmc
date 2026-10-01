@@ -1,5 +1,4 @@
 import type { HomeContent } from "@/lib/types";
-import { AmbientGlow } from "./AmbientGlow";
 import { BookingProvider } from "./BookingProvider";
 import { GoogleReviewsSection } from "./GoogleReviews";
 import { Hero } from "./Hero";
@@ -21,12 +20,12 @@ import { SmoothScroll } from "./SmoothScroll";
 export function HomePage({ content }: { content: HomeContent }) {
   return (
     <MotionProvider>
-      <AmbientGlow />
+      <div className="page-glow" aria-hidden="true" />
       <ScrollProgress />
       <BookingProvider groups={content.bookingGroups} phone={content.settings.phone}>
-        <SiteHeader nav={content.nav} />
+        <SiteHeader nav={content.headerNav} phone={content.settings.phone} />
         <main id="top">
-          <Hero settings={content.settings} specialistCount={content.specialistCount} />
+          <Hero settings={content.settings} sections={content.sections} />
           {content.sections.map((section) => (
             <ServiceSection key={section.category} section={section} />
           ))}

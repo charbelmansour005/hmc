@@ -12,7 +12,7 @@ type CardItem = Pick<PublicServiceItem, "id" | "name" | "chip" | "description" |
 
 export function ServiceCard({ item, wide = false }: { item: CardItem; wide?: boolean }) {
   return (
-    <TiltCard className="card" href="#book" service={item.bookingId || undefined}>
+    <TiltCard className="card" href="#book" service={item.bookingId || undefined} tilt={0}>
       <div className="card-media">
         <motion.div className="media-zoom" variants={zoom}>
           <CmsImage image={item.image} width={560} height={385} sizes={wide ? WIDE_CARD_SIZES : CARD_SIZES} />

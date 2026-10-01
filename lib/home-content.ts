@@ -68,9 +68,16 @@ export function buildHomeContent(input: {
     clinics,
     doctors: [...input.doctors].sort(bySortOrder),
     bookingGroups,
-    specialistCount: services.filter((s) => s.category === "specialists").length,
     nav: [
       ...sections.map((s) => ({ href: `#${s.anchor}`, label: CATEGORY_META[s.category].navLabel })),
+      { href: "#visit", label: "Visit us" },
+    ],
+    headerNav: [
+      ...(sections.length > 0
+        ? [{ href: "#services", label: "Services", match: sections.map((s) => s.anchor) }]
+        : []),
+      ...(clinics.length > 0 ? [{ href: "#clinics", label: "Clinics" }] : []),
+      ...(input.doctors.length > 0 ? [{ href: "#team", label: "Team" }] : []),
       { href: "#visit", label: "Visit us" },
     ],
   };
