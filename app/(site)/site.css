@@ -1103,7 +1103,9 @@ textarea.input { height: auto; min-height: 48px; padding: 13px 16px; resize: ver
     linear-gradient(180deg, rgba(28, 42, 56, 0.55) 0%, rgba(13, 21, 29, 0) 100%);
 }
 
-/* A lighter grey keeps the hero lede comfortably readable on the dark glow. */
+/* The hero lede sits over the aurora: a lighter grey (dark mode) and a slightly
+   darker one (light mode) than --color-muted keep it at 4.5:1 or better. */
+:root:not([data-theme="dark"]) .hero-lede { color: #586673; }
 :root[data-theme="dark"] .hero-lede { color: #b3bfcb; }
 
 :root[data-theme="dark"] .btn-light:hover { background: #1f2c38; }
@@ -1315,6 +1317,66 @@ textarea.input { height: auto; min-height: 48px; padding: 13px 16px; resize: ver
 @keyframes heroCard {
   from { opacity: 0; transform: translateY(32px) scale(0.965); }
   to { opacity: 1; transform: none; }
+}
+
+/* Aurora (WebGL, components/site/Aurora.tsx): drawn at a fraction of the screen
+   resolution and scaled up; it fades in once its first frame is ready and
+   fades out towards the bottom of the hero. */
+.aurora {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 1.6s var(--ease-out);
+  -webkit-mask-image: linear-gradient(180deg, #000 52%, transparent 98%);
+  mask-image: linear-gradient(180deg, #000 52%, transparent 98%);
+  will-change: transform;
+}
+.aurora.is-ready { opacity: 1; }
+
+/* Fallback without WebGL: slowly drifting orbs over the original static glow. */
+.glow-orbs {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(180deg, #000 45%, transparent 95%);
+  mask-image: linear-gradient(180deg, #000 45%, transparent 95%);
+}
+.glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.5;
+  will-change: transform;
+}
+.glow-orb--teal {
+  width: 560px;
+  height: 440px;
+  left: -10%;
+  top: 8%;
+  background: radial-gradient(closest-side, rgba(47, 168, 137, 0.55), transparent);
+}
+.glow-orb--blue {
+  width: 600px;
+  height: 460px;
+  right: -8%;
+  top: -8%;
+  background: radial-gradient(closest-side, rgba(59, 130, 214, 0.42), transparent);
+}
+.glow-orb--mint {
+  width: 420px;
+  height: 340px;
+  left: 38%;
+  top: 34%;
+  background: radial-gradient(closest-side, rgba(143, 224, 214, 0.5), transparent);
+}
+:root[data-theme="dark"] .glow-orb { opacity: 0.32; }
+@media (max-width: 640px) {
+  .glow-orb--teal { width: 340px; height: 300px; }
+  .glow-orb--blue { width: 360px; height: 300px; }
+  .glow-orb--mint { display: none; }
 }
 
 /* Reading progress along the top edge. */
@@ -1585,7 +1647,6 @@ a.review-author:hover { color: var(--color-teal); }
   gap: 12px 20px;
   margin-top: 2px;
 }
-.reviews-note { font-size: 12.5px; color: var(--color-muted); }
 .reviews-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .reviews-actions.is-pending { visibility: hidden; }
 

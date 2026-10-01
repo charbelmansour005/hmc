@@ -137,7 +137,9 @@ How it behaves, and why:
 
 - **Only 5 reviews.** Google returns at most 5 reviews per place, chosen "by
   relevance"; there is no "newest" option. The site shows those rated 4★+,
-  newest first, and says so under the reviews (Google requires that notice).
+  newest first. Google's policy asks for a visible notice of that ordering and
+  filtering; it was taken off the page at the client's request, so either restore
+  it or drop the filter and keep Google's order if Google ever flags it.
   Showing *all* reviews, newest first, needs the Google Business Profile API
   (the owner's account + Google's approval).
 - **No caching.** Google's terms allow storing only Place IDs, so every view of

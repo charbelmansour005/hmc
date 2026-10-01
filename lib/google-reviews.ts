@@ -11,7 +11,8 @@ import type { GoogleReviewDTO, GoogleReviewsDTO } from "./types";
 //   visitor scrolls near it, which keeps the billed calls down.
 // - Google returns at most 5 reviews per place, picked "by relevance", and
 //   has no newest-first option. We sort those by date and drop anything
-//   under REVIEW_MIN_RATING, and the section tells visitors so (required).
+//   under REVIEW_MIN_RATING. (Google's policy asks for a visible notice of
+//   that ordering and filtering; the site leaves it out at the client's request.)
 // - Attribution: each review keeps its author name, photo and profile link,
 //   plus a link to the review on Google Maps.
 

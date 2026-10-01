@@ -2,7 +2,6 @@
 
 import { motion } from "motion/react";
 import { useLayoutEffect, useEffect, useRef, useState } from "react";
-import { REVIEW_MIN_RATING } from "@/lib/categories";
 import type { GoogleReviewDTO, GoogleReviewsDTO } from "@/lib/types";
 import { ChevronIcon, StarRating } from "./icons";
 import { cascade, fadeUp, VIEWPORT } from "./motion/variants";
@@ -173,11 +172,6 @@ export function GoogleReviewsSection() {
         )}
 
         <div className="reviews-foot">
-          {reviews.length > 0 || !data ? (
-            <p className="reviews-note">
-              Google&apos;s most relevant reviews rated {REVIEW_MIN_RATING} stars and up, newest first.
-            </p>
-          ) : null}
           {/* Same buttons while loading (invisible), so the row keeps its height. */}
           <div className={data ? "reviews-actions" : "reviews-actions is-pending"} aria-hidden={!data}>
             {data?.reviewsUrl || !data ? (
