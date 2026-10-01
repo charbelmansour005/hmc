@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, type Transition } from "motion/react";
+import { m, type Transition } from "framer-motion";
 import { Aurora } from "./Aurora";
 
 const drift = (duration: number, delay = 0): Transition => ({
@@ -15,17 +15,17 @@ const drift = (duration: number, delay = 0): Transition => ({
 function GlowOrbs() {
   return (
     <div className="glow-orbs">
-      <motion.span
+      <m.span
         className="glow-orb glow-orb--teal"
         animate={{ x: [0, 80, -30], y: [0, 50, 110], scale: [1, 1.12, 0.94] }}
         transition={drift(22)}
       />
-      <motion.span
+      <m.span
         className="glow-orb glow-orb--blue"
         animate={{ x: [0, -90, 30], y: [0, 70, -10], scale: [1, 0.92, 1.1] }}
         transition={drift(26, 1)}
       />
-      <motion.span
+      <m.span
         className="glow-orb glow-orb--mint"
         animate={{ x: [0, 60, -70], y: [0, -50, 40], scale: [1, 1.15, 1] }}
         transition={drift(30, 2)}

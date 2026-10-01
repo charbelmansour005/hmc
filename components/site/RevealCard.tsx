@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import { m } from "framer-motion";
 import { useCardReveal } from "./motion/useCardReveal";
 import { cardIn } from "./motion/variants";
 
@@ -21,14 +21,14 @@ export function RevealCard({
 
   if (as === "li") {
     return (
-      <motion.li ref={ref as React.Ref<HTMLLIElement>} {...props}>
+      <m.li ref={ref as React.Ref<HTMLLIElement>} {...props}>
         {children}
-      </motion.li>
+      </m.li>
     );
   }
   return (
-    <motion.article ref={ref as React.Ref<HTMLElement>} {...props}>
+    <m.article ref={ref as React.Ref<HTMLElement>} {...props}>
       {children}
-    </motion.article>
+    </m.article>
   );
 }

@@ -1,8 +1,8 @@
 // Shared Motion variants. Plain objects only — deliberately no "use client" —
-// so server components can hand them straight to motion/react-client elements.
+// so server components can hand them straight to framer-motion/m elements.
 // Parents reveal with initial="hidden" whileInView="show"; children inherit the
 // labels, and cards additionally pass "hover" down to their image.
-import type { Transition, Variants } from "motion/react";
+import type { Transition, Variants } from "framer-motion";
 
 /** Expo-style ease-out used across the site (matches --ease-out in site.css). */
 export const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];

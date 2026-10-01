@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "motion/react";
+import { m, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
 import { useCardReveal } from "./motion/useCardReveal";
 import { cardIn } from "./motion/variants";
 
@@ -62,14 +62,14 @@ export function TiltCard({ as = "a", className, href, service, tilt = 5, childre
 
   if (as === "article") {
     return (
-      <motion.article ref={ref as React.Ref<HTMLElement>} {...shared}>
+      <m.article ref={ref as React.Ref<HTMLElement>} {...shared}>
         {children}
-      </motion.article>
+      </m.article>
     );
   }
   return (
-    <motion.a ref={ref as React.Ref<HTMLAnchorElement>} {...shared} href={href} data-service={service}>
+    <m.a ref={ref as React.Ref<HTMLAnchorElement>} {...shared} href={href} data-service={service}>
       {children}
-    </motion.a>
+    </m.a>
   );
 }

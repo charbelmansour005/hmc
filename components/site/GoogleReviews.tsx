@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import { m } from "framer-motion";
 import { useLayoutEffect, useEffect, useRef, useState } from "react";
 import { REVIEW_MIN_RATING } from "@/lib/categories";
 import type { GoogleReviewDTO, GoogleReviewsDTO } from "@/lib/types";
@@ -102,9 +102,9 @@ export function GoogleReviewsSection() {
     <section className="section" id="reviews" ref={sectionRef} aria-busy={!data}>
       <div className="container">
         <div className="reviews-head">
-          <motion.div className="section-head" initial="hidden" whileInView="show" viewport={VIEWPORT} variants={cascade(0.1)}>
-            <motion.h2 variants={fadeUp}>What patients say</motion.h2>
-            <motion.p className="reviews-summary" variants={fadeUp}>
+          <m.div className="section-head" initial="hidden" whileInView="show" viewport={VIEWPORT} variants={cascade(0.1)}>
+            <m.h2 variants={fadeUp}>What patients say</m.h2>
+            <m.p className="reviews-summary" variants={fadeUp}>
               {data?.rating ? (
                 <>
                   <strong>{data.rating.toFixed(1)}</strong>
@@ -119,8 +119,8 @@ export function GoogleReviewsSection() {
               ) : (
                 <span className="skeleton-line" aria-hidden="true" />
               )}
-            </motion.p>
-          </motion.div>
+            </m.p>
+          </m.div>
           {carousel.scrollable ? (
             <div className="reviews-nav">
               <button

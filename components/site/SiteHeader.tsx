@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import { m } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import type { NavLink } from "@/lib/types";
@@ -81,7 +81,7 @@ export function SiteHeader({ nav }: { nav: NavLink[] }) {
                     aria-current={isActive ? "true" : undefined}
                   >
                     {/* One shared pill that glides to whichever section you're reading. */}
-                    {isActive ? <motion.span layoutId="nav-pill" className="nav-pill" transition={PILL_SPRING} /> : null}
+                    {isActive ? <m.span layoutId="nav-pill" className="nav-pill" transition={PILL_SPRING} /> : null}
                     {link.label}
                   </a>
                 </li>

@@ -1,4 +1,4 @@
-import * as motion from "motion/react-client";
+import * as m from "framer-motion/m";
 import { telHref } from "@/lib/home-content";
 import type { NavLink, SettingsDTO } from "@/lib/types";
 import { HmcLogo } from "./HmcLogo";
@@ -8,7 +8,7 @@ export function SiteFooter({ nav, settings }: { nav: NavLink[]; settings: Settin
   return (
     <footer className="site-footer">
       <div className="container">
-        <motion.div className="footer-card" initial="hidden" whileInView="show" viewport={VIEWPORT} variants={fadeUp}>
+        <m.div className="footer-card" initial="hidden" whileInView="show" viewport={VIEWPORT} variants={fadeUp}>
           <div className="footer-brand">
             <h2>
               <HmcLogo id="footer-logo" />
@@ -28,7 +28,7 @@ export function SiteFooter({ nav, settings }: { nav: NavLink[]; settings: Settin
             <a href={telHref(settings.phone)}>{settings.phone}</a>
             <span>{settings.address ?? "[Address]"}</span>
           </address>
-        </motion.div>
+        </m.div>
         <div className="footer-bottom">
           <p className="copyright">© {new Date().getFullYear()} Hajj Medical Center. All rights reserved.</p>
           <p className="credit">Developed by Runtime Collective</p>

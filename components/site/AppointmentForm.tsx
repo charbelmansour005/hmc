@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "motion/react";
+import { m } from "framer-motion";
 import { useEffect, useState } from "react";
 import { isValidPhone, whatsappUrl } from "@/lib/phone";
 import { flash, useBooking, type BookingField } from "./BookingProvider";
@@ -196,7 +196,7 @@ export function AppointmentForm({ whatsapp }: { whatsapp: string | null }) {
 
   return (
     // Reveals with the "Visit us" block (it inherits hidden/show from the parent).
-    <motion.form
+    <m.form
       className="panel"
       id="contact-form"
       noValidate
@@ -271,6 +271,6 @@ export function AppointmentForm({ whatsapp }: { whatsapp: string | null }) {
       <p className={error ? "form-error is-visible" : "form-error"} role="alert">
         {error}
       </p>
-    </motion.form>
+    </m.form>
   );
 }

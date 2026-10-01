@@ -1,4 +1,4 @@
-import * as motion from "motion/react-client";
+import * as m from "framer-motion/m";
 import Image from "next/image";
 import { telHref } from "@/lib/home-content";
 import { publicMapboxToken } from "@/lib/mapbox";
@@ -20,10 +20,10 @@ const reveal = { initial: "hidden", whileInView: "show", viewport: VIEWPORT } as
 
 function SectionHead({ heading, lede }: { heading: string; lede?: string | null }) {
   return (
-    <motion.div className="section-head" {...reveal} variants={cascade(0.1)}>
-      <motion.h2 variants={fadeUp}>{heading}</motion.h2>
-      {lede ? <motion.p variants={fadeUp}>{lede}</motion.p> : null}
-    </motion.div>
+    <m.div className="section-head" {...reveal} variants={cascade(0.1)}>
+      <m.h2 variants={fadeUp}>{heading}</m.h2>
+      {lede ? <m.p variants={fadeUp}>{lede}</m.p> : null}
+    </m.div>
   );
 }
 
@@ -81,9 +81,9 @@ export function StepsSection() {
         <ol className="steps">
           {STEPS.map((step, i) => (
             <RevealCard as="li" className="step" key={step.title}>
-              <motion.span className="step-num" variants={pop}>
+              <m.span className="step-num" variants={pop}>
                 {i + 1}
-              </motion.span>
+              </m.span>
               <h3>{step.title}</h3>
               <p>{step.text}</p>
             </RevealCard>
@@ -143,13 +143,13 @@ export function WhySection() {
     <section className="section" id="why">
       <div className="container">
         <SectionHead heading="Why patients choose us" />
-        <motion.div className="why" {...reveal} variants={fadeUp}>
-          <motion.ul variants={cascade(0.12, 0.15)}>
+        <m.div className="why" {...reveal} variants={fadeUp}>
+          <m.ul variants={cascade(0.12, 0.15)}>
             {REASONS.map((reason) => (
-              <motion.li key={reason} variants={slideIn}>
-                <motion.span className="check" aria-hidden="true" variants={pop}>
+              <m.li key={reason} variants={slideIn}>
+                <m.span className="check" aria-hidden="true" variants={pop}>
                   <svg viewBox="0 0 16 16">
-                    <motion.path
+                    <m.path
                       d="M3.5 8.5 6.5 11.5 12.5 4.5"
                       fill="none"
                       stroke="#fff"
@@ -159,12 +159,12 @@ export function WhySection() {
                       variants={draw}
                     />
                   </svg>
-                </motion.span>
+                </m.span>
                 {reason}
-              </motion.li>
+              </m.li>
             ))}
-          </motion.ul>
-        </motion.div>
+          </m.ul>
+        </m.div>
       </div>
     </section>
   );
@@ -175,10 +175,10 @@ export function VisitSection({ settings }: { settings: SettingsDTO }) {
     <section className="section" id="visit">
       <div className="container">
         <SectionHead heading="Visit us" />
-        <motion.div className="visit" {...reveal} variants={cascade(0.12)}>
+        <m.div className="visit" {...reveal} variants={cascade(0.12)}>
           <AppointmentForm whatsapp={bookingWhatsApp(settings)} />
 
-          <motion.div className="panel" variants={fadeUp}>
+          <m.div className="panel" variants={fadeUp}>
             <ul className="contact-list">
               <li>
                 <PinIcon aria-hidden />
@@ -202,8 +202,8 @@ export function VisitSection({ settings }: { settings: SettingsDTO }) {
             <div className="map">
               <LocationMap token={publicMapboxToken()} query={settings.mapQuery} address={settings.address} />
             </div>
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       </div>
     </section>
   );

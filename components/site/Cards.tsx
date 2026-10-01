@@ -1,4 +1,4 @@
-import * as motion from "motion/react-client";
+import * as m from "framer-motion/m";
 import type { PublicClinicItem, PublicServiceItem } from "@/lib/types";
 import { CmsImage } from "./CmsImage";
 import { zoom } from "./motion/variants";
@@ -14,9 +14,9 @@ export function ServiceCard({ item, wide = false }: { item: CardItem; wide?: boo
   return (
     <TiltCard className="card" href="#book" service={item.bookingId || undefined}>
       <div className="card-media">
-        <motion.div className="media-zoom" variants={zoom}>
+        <m.div className="media-zoom" variants={zoom}>
           <CmsImage image={item.image} width={560} height={385} sizes={wide ? WIDE_CARD_SIZES : CARD_SIZES} />
-        </motion.div>
+        </m.div>
         {item.chip ? <span className="chip">{item.chip}</span> : null}
       </div>
       <div className="card-body">
@@ -31,9 +31,9 @@ export function FeatureCard({ item }: { item: PublicServiceItem }) {
   return (
     <TiltCard as="article" className="feature" tilt={2.5}>
       <div className="feature-media">
-        <motion.div className="media-zoom" variants={zoom}>
+        <m.div className="media-zoom" variants={zoom}>
           <CmsImage image={item.image} width={1400} height={620} sizes={FEATURE_SIZES} />
-        </motion.div>
+        </m.div>
       </div>
       <div className="feature-body">
         <h3>{item.name}</h3>

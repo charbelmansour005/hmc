@@ -1,4 +1,4 @@
-import { animate, type AnimationPlaybackControls } from "motion/react";
+import { animateValue, type AnimationPlaybackControls } from "framer-motion";
 
 // One Motion-driven page scroll at a time. Driving the scroll ourselves, rather
 // than relying on the browser's native smoothing, gives the same easing in every
@@ -64,8 +64,11 @@ export function smoothScrollTo(target: Element | "top", block: "start" | "center
   savedBehavior = document.documentElement.style.scrollBehavior;
   document.documentElement.style.scrollBehavior = "auto";
   startedAt = performance.now();
-  active = animate(from, to, {
-    duration: Math.min(1.15, 0.45 + Math.abs(to - from) / 3200),
+  // animateValue is Motion's bare value tween (the engine animate() uses for a
+  // single number) without animate()'s element machinery. It takes milliseconds.
+  active = animateValue({
+    keyframes: [from, to],
+    duration: Math.min(1150, 450 + Math.abs(to - from) / 3.2),
     ease: [0.65, 0, 0.35, 1],
     onUpdate: (y) => window.scrollTo(0, y),
     onComplete: release,
