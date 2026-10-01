@@ -30,6 +30,7 @@ export type CategoryMeta = {
 export const CATEGORY_META: Record<Category, CategoryMeta> = {
   specialists: {
     heading: "Our specialists",
+    lede: "Choose a specialist to start your booking.",
     anchor: "specialists",
     navLabel: "Specialists",
     optgroup: "Specialists",
