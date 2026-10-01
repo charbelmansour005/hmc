@@ -1,4 +1,5 @@
 import type { HomeContent } from "@/lib/types";
+import { AmbientGlow } from "./AmbientGlow";
 import { BookingProvider } from "./BookingProvider";
 import { GoogleReviewsSection } from "./GoogleReviews";
 import { Hero } from "./Hero";
@@ -20,7 +21,7 @@ import { SmoothScroll } from "./SmoothScroll";
 export function HomePage({ content }: { content: HomeContent }) {
   return (
     <MotionProvider>
-      <div className="page-glow" aria-hidden="true" />
+      <AmbientGlow />
       <ScrollProgress />
       <BookingProvider groups={content.bookingGroups} phone={content.settings.phone}>
         <SiteHeader nav={content.headerNav} phone={content.settings.phone} />
