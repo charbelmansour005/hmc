@@ -7,6 +7,7 @@ import { connectDB } from "./db";
 import { toAppointmentDTO } from "./dto";
 import { assertObjectId, badRequest, notFound } from "./http";
 import type { AppointmentInput } from "./schemas";
+import { getSettings } from "./settings";
 import type { AppointmentDTO } from "./types";
 
 export const APPOINTMENTS_PAGE_SIZE = 25;
@@ -23,8 +24,9 @@ export async function createAppointment(input: AppointmentInput): Promise<Appoin
   }
 
   await connectDB();
-  const service = await Service.findById(input.serviceId).lean();
-  if (!service || service.bookAs) {
+  // Only what the form offers: a bookable service, in a section that is shown.
+  const [service, settings] = await Promise.all([Service.findById(input.serviceId).lean(), getSettings()]);
+  if (!service || service.bookAs || settings.hiddenSections.includes(service.category)) {
     throw badRequest("Please check the highlighted fields.", { serviceId: "Choose a service from the list." });
   }
 

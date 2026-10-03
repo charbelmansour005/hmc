@@ -3,8 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MAX_GOOGLE_PLACES, type BookingChannel } from "@/lib/categories";
+import { TRANSLATION_LOCALES, type TranslationLocale } from "@/lib/i18n/config";
 import type { SettingsDTO } from "@/lib/types";
 import { sendJson, type FieldErrors } from "./api";
+import { TranslationsCard, translationValues, type TranslationField } from "./TranslationsCard";
 import { buttonClass, Card, Field, inputClass, Notice } from "./ui";
 
 /** One Place ID per line (commas work too). */
@@ -24,6 +26,9 @@ export function SettingsForm({ settings, reviewsKeySet }: { settings: SettingsDT
   const [bookingChannel, setBookingChannel] = useState<BookingChannel>(settings.bookingChannel);
   const [whatsapp, setWhatsapp] = useState(settings.whatsapp ?? "");
   const [placeIds, setPlaceIds] = useState(settings.googlePlaceIds.join("\n"));
+  const [translations, setTranslations] = useState(() =>
+    translationValues(settings.translations, ["address", "openingHours"]),
+  );
   const [fields, setFields] = useState<FieldErrors>({});
   const [message, setMessage] = useState<{ tone: "error" | "success"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -42,6 +47,12 @@ export function SettingsForm({ settings, reviewsKeySet }: { settings: SettingsDT
       bookingChannel,
       whatsapp: whatsapp || null,
       googlePlaceIds: parsePlaceIds(placeIds),
+      translations: Object.fromEntries(
+        TRANSLATION_LOCALES.map((locale) => {
+          const text = translations[locale];
+          return [locale, { address: text.address || null, openingHours: text.openingHours || null }];
+        }),
+      ),
     });
     setBusy(false);
     if (!result.ok) {
@@ -56,6 +67,14 @@ export function SettingsForm({ settings, reviewsKeySet }: { settings: SettingsDT
   // zod reports array items as "googlePlaceIds.0"; show the first one on the field.
   const err = (key: string) =>
     fields[key] ?? Object.entries(fields).find(([k]) => k.startsWith(`${key}.`))?.[1];
+
+  const onTranslation = (locale: TranslationLocale, key: string, value: string) =>
+    setTranslations((prev) => ({ ...prev, [locale]: { ...prev[locale], [key]: value } }));
+
+  const translationFields: TranslationField[] = [
+    { key: "address", label: "Address", english: address, maxLength: 160 },
+    { key: "openingHours", label: "Opening hours", english: openingHours, maxLength: 80 },
+  ];
 
   return (
     <form onSubmit={onSubmit} noValidate className="grid gap-6">
@@ -83,6 +102,8 @@ export function SettingsForm({ settings, reviewsKeySet }: { settings: SettingsDT
           <input id="mapQuery" className={inputClass} value={mapQuery} maxLength={120} onChange={(e) => setMapQuery(e.target.value)} aria-invalid={Boolean(err("mapQuery"))} />
         </Field>
       </Card>
+
+      <TranslationsCard fields={translationFields} values={translations} onChange={onTranslation} error={err} />
 
       <Card className="grid gap-5">
         <h2 className="text-lg text-ink">Appointment requests</h2>

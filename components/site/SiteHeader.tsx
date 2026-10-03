@@ -4,9 +4,12 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { telHref } from "@/lib/home-content";
+import { rich } from "@/lib/i18n/rich";
 import type { NavLink } from "@/lib/types";
 import { HmcLogoCompact } from "./HmcLogo";
+import { useI18n } from "./I18nProvider";
 import { PhoneIcon } from "./icons";
+import { LanguageLinks, LanguageMenu } from "./LanguageSwitcher";
 
 const PILL_SPRING = { type: "spring", stiffness: 380, damping: 32 } as const;
 const SHEET_EASE = [0.22, 1, 0.36, 1] as const;
@@ -55,6 +58,7 @@ function useScrolled(): boolean {
 const FOCUSABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export function SiteHeader({ nav, phone }: { nav: NavLink[]; phone: string }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -104,8 +108,8 @@ export function SiteHeader({ nav, phone }: { nav: NavLink[]; phone: string }) {
   return (
     <header ref={headerRef} className="site-header" data-scrolled={scrolled || open ? "" : undefined}>
       <div className="container">
-        <nav className="nav" aria-label="Main">
-          <a className="brand" href="#top" aria-label="Hajj Medical Center home" onClick={close}>
+        <nav className="nav" aria-label={t.nav.main}>
+          <a className="brand" href="#top" aria-label={t.nav.home} onClick={close}>
             <HmcLogoCompact id="header-logo" />
           </a>
 
@@ -129,21 +133,22 @@ export function SiteHeader({ nav, phone }: { nav: NavLink[]; phone: string }) {
           </ul>
 
           <div className="nav-actions">
-            <a className="nav-phone" href={telHref(phone)}>
+            <a className="nav-phone" href={telHref(phone)} dir="ltr">
               <PhoneIcon aria-hidden />
               {phone}
             </a>
             <a className="btn btn-primary btn-sm nav-cta" href="#book" onClick={close}>
-              Book a visit
+              {t.nav.book}
             </a>
-            <ThemeToggle className="theme-toggle" />
+            <LanguageMenu />
+            <ThemeToggle className="theme-toggle" labels={{ toLight: t.nav.lightMode, toDark: t.nav.darkMode }} />
             <button
               ref={toggleRef}
               className="nav-toggle"
               type="button"
               aria-controls="nav-menu"
               aria-expanded={open}
-              aria-label={open ? "Close menu" : "Open menu"}
+              aria-label={open ? t.nav.closeMenu : t.nav.openMenu}
               onClick={() => setOpen((v) => !v)}
             >
               <span></span>
@@ -163,6 +168,9 @@ export function SiteHeader({ nav, phone }: { nav: NavLink[]; phone: string }) {
             transition={{ duration: 0.28, ease: SHEET_EASE }}
           >
             <ul className="container">
+              <li className="nav-menu-languages">
+                <LanguageLinks className="nav-languages" />
+              </li>
               {nav.map((link, i) => (
                 <motion.li
                   key={link.href}
@@ -178,7 +186,7 @@ export function SiteHeader({ nav, phone }: { nav: NavLink[]; phone: string }) {
               <li className="nav-menu-phone">
                 <a href={telHref(phone)}>
                   <PhoneIcon aria-hidden />
-                  Call {phone}
+                  {rich(t.nav.call, { phone: <bdi dir="ltr">{phone}</bdi> })}
                 </a>
               </li>
             </ul>

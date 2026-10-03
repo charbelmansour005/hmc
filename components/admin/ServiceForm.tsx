@@ -3,9 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CATEGORIES, CATEGORY_META, type Category, type ServiceDisplay } from "@/lib/categories";
+import { TRANSLATION_LOCALES, type TranslationLocale } from "@/lib/i18n/config";
 import type { ServiceDTO } from "@/lib/types";
 import { sendMultipart, type FieldErrors } from "./api";
 import { ImageField } from "./ImageField";
+import { splitList, TranslationsCard, translationValues, type TranslationField } from "./TranslationsCard";
 import { buttonClass, Card, Field, inputClass, Notice } from "./ui";
 
 type BookableOption = { id: string; label: string; group: string };
@@ -31,6 +33,9 @@ export function ServiceForm({
   const [bookingLabel, setBookingLabel] = useState(service?.bookingLabel ?? "");
   const [imageAlt, setImageAlt] = useState(service?.image.alt ?? "");
   const [sortOrder, setSortOrder] = useState(String(service?.sortOrder ?? 100));
+  const [translations, setTranslations] = useState(() =>
+    translationValues(service?.translations, ["name", "chip", "tags", "description", "bookingLabel", "imageAlt"]),
+  );
   const [image, setImage] = useState<File | null>(null);
   const [fields, setFields] = useState<FieldErrors>({});
   const [error, setError] = useState("");
@@ -54,6 +59,23 @@ export function ServiceForm({
       bookAsId: booksOther ? bookAsId || null : null,
       imageAlt,
       sortOrder: Number(sortOrder),
+      // Same rules as the English above: tags on feature cards only, no dropdown name for a card that books another service.
+      translations: Object.fromEntries(
+        TRANSLATION_LOCALES.map((locale) => {
+          const text = translations[locale];
+          return [
+            locale,
+            {
+              name: text.name || null,
+              chip: text.chip || null,
+              description: text.description || null,
+              tags: display === "feature" ? splitList(text.tags) : [],
+              bookingLabel: booksOther ? null : text.bookingLabel || null,
+              imageAlt: text.imageAlt || null,
+            },
+          ];
+        }),
+      ),
     };
     const result = service
       ? await sendMultipart<ServiceDTO>(`/api/admin/services/${service.id}`, "PATCH", payload, image)
@@ -69,6 +91,22 @@ export function ServiceForm({
   };
 
   const err = (key: string) => fields[key];
+
+  const onTranslation = (locale: TranslationLocale, key: string, value: string) =>
+    setTranslations((prev) => ({ ...prev, [locale]: { ...prev[locale], [key]: value } }));
+
+  // The translatable text, in the order it appears above; it follows the choices made there.
+  const translationFields: TranslationField[] = [
+    { key: "name", label: "Name", english: name, maxLength: 80 },
+    display === "card"
+      ? { key: "chip", label: "Chip label", english: chip, maxLength: 24 }
+      : { key: "tags", label: "Tags (comma-separated)", english: tags },
+    { key: "description", label: "Short description", english: description, maxLength: 200, multiline: true },
+    ...(booksOther
+      ? []
+      : [{ key: "bookingLabel", label: "Name in the booking dropdown", english: bookingLabel || name, maxLength: 60 }]),
+    { key: "imageAlt", label: "Photo description (alt text)", english: imageAlt, maxLength: 140 },
+  ];
 
   return (
     <form onSubmit={onSubmit} noValidate className="grid gap-6">
@@ -177,6 +215,8 @@ export function ServiceForm({
           <input id="sortOrder" type="number" min={0} max={9999} className={`${inputClass} max-w-40`} value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} />
         </Field>
       </Card>
+
+      <TranslationsCard fields={translationFields} values={translations} onChange={onTranslation} error={err} />
 
       <div className="flex flex-wrap gap-3">
         <button type="submit" className={buttonClass.primary} disabled={busy}>

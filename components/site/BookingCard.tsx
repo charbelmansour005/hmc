@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fmt } from "@/lib/i18n/format";
 import { flash, useBooking } from "./BookingProvider";
 import { DateListbox } from "./DateListbox";
+import { useI18n } from "./I18nProvider";
 import { smoothScrollTo } from "./scroll";
 import { ServiceCombobox } from "./ServiceCombobox";
 
@@ -10,6 +12,7 @@ import { ServiceCombobox } from "./ServiceCombobox";
 // off to the "Visit us" form, which collects name and phone and submits.
 export function BookingCard() {
   const booking = useBooking();
+  const { t } = useI18n();
   const [note, setNote] = useState("");
 
   // Clear the hand-off note once a request has been sent (selection reset).
@@ -32,7 +35,7 @@ export function BookingCard() {
 
     const service = booking.serviceLabel(booking.serviceId);
     const day = booking.dayLabel(booking.date);
-    setNote(`Great — ${service} on ${day}. Add your name and phone below and our team will confirm.`);
+    setNote(fmt(t.booking.note, { service: service ?? "", date: day ?? "" }));
 
     setTimeout(() => {
       const contact = booking.contactRef.current;
@@ -44,17 +47,17 @@ export function BookingCard() {
 
   return (
     <form className="booking" id="book" noValidate ref={booking.bookingRef} onSubmit={onSubmit}>
-      <h2>Book a visit</h2>
+      <h2>{t.booking.title}</h2>
       <div className="field">
-        <label htmlFor="service">Service</label>
+        <label htmlFor="service">{t.booking.service}</label>
         <ServiceCombobox />
       </div>
       <div className="field">
-        <label htmlFor="date">Date</label>
+        <label htmlFor="date">{t.booking.date}</label>
         <DateListbox />
       </div>
       <button className="btn btn-primary btn-block" type="submit">
-        Continue
+        {t.booking.continue}
       </button>
       <p className={note ? "form-success is-visible" : "form-success"} role="status" aria-live="polite">
         {note}

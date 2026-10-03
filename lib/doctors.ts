@@ -2,12 +2,13 @@ import "server-only";
 import type { Model } from "mongoose";
 import { Doctor } from "@/models/Doctor";
 import { connectDB } from "./db";
-import { toDoctorDTO } from "./dto";
+import { toDoctorDTO, toDoctorTranslations } from "./dto";
 import { bySortOrder } from "./home-content";
 import { assertObjectId, notFound } from "./http";
 import type { DoctorCreateInput, DoctorUpdateInput } from "./schemas";
 import { uniqueSlug } from "./slug";
 import { deleteImage, plainImage, saveImage } from "./storage";
+import { mergeTranslations } from "./translations";
 import type { DoctorDTO } from "./types";
 import type { UploadedImage } from "./upload";
 
@@ -38,6 +39,7 @@ export async function createDoctor(input: DoctorCreateInput, photo: UploadedImag
       accent: input.accent,
       photo: stored,
       sortOrder: input.sortOrder,
+      translations: mergeTranslations(toDoctorTranslations(undefined), input.translations),
     });
     return toDoctorDTO(doc.toObject());
   } catch (err) {
@@ -66,6 +68,7 @@ export async function updateDoctor(
   if (patch.bio !== undefined) doc.bio = patch.bio;
   if (patch.accent !== undefined) doc.accent = patch.accent;
   if (patch.sortOrder !== undefined) doc.sortOrder = patch.sortOrder;
+  doc.translations = mergeTranslations(toDoctorTranslations(doc.toObject().translations), patch.translations);
   if (stored) doc.photo = stored;
   else if (patch.removePhoto) doc.photo = null;
   else if (doc.photo) doc.photo = { ...plainImage(doc.photo)!, alt };

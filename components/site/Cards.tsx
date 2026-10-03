@@ -1,4 +1,5 @@
 import * as motion from "motion/react-client";
+import type { Messages } from "@/lib/i18n/messages/en";
 import type { PublicClinicItem, PublicServiceItem } from "@/lib/types";
 import { CmsImage } from "./CmsImage";
 import { zoom } from "./motion/variants";
@@ -27,7 +28,7 @@ export function ServiceCard({ item, wide = false }: { item: CardItem; wide?: boo
   );
 }
 
-export function FeatureCard({ item }: { item: PublicServiceItem }) {
+export function FeatureCard({ item, t }: { item: PublicServiceItem; t: Messages }) {
   return (
     <TiltCard as="article" className="feature" tilt={2.5}>
       <div className="feature-media">
@@ -39,14 +40,14 @@ export function FeatureCard({ item }: { item: PublicServiceItem }) {
         <h3>{item.name}</h3>
         {item.description ? <p>{item.description}</p> : null}
         {item.tags.length > 0 ? (
-          <ul className="tags" aria-label="Treatment areas">
+          <ul className="tags" aria-label={t.sections.treatmentAreas}>
             {item.tags.map((tag) => (
               <li key={tag}>{tag}</li>
             ))}
           </ul>
         ) : null}
         <a className="btn btn-light btn-sm" href="#book" data-service={item.bookingId}>
-          Learn more
+          {t.sections.learnMore}
         </a>
       </div>
     </TiltCard>

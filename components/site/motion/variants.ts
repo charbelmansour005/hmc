@@ -18,10 +18,13 @@ export const fadeUp: Variants = {
   show: { opacity: 1, y: 0, transition: { y: SETTLE, opacity: { duration: 0.7, ease: EASE_OUT } } },
 };
 
-export const slideIn: Variants = {
-  hidden: { opacity: 0, x: -16 },
-  show: { opacity: 1, x: 0, transition: { duration: 0.6, ease: EASE_OUT } },
-};
+/** Slides in from the side the text starts on: the left, or the right in Arabic. */
+export function slideIn(dir: "ltr" | "rtl" = "ltr"): Variants {
+  return {
+    hidden: { opacity: 0, x: dir === "rtl" ? 16 : -16 },
+    show: { opacity: 1, x: 0, transition: { duration: 0.6, ease: EASE_OUT } },
+  };
+}
 
 /** Parent that releases its children one after another. */
 export function cascade(staggerChildren = 0.08, delayChildren = 0): Variants {

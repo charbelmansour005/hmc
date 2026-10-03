@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getGoogleReviews, googlePlacesKey } from "@/lib/google-reviews";
 import { HttpError, rateLimited, withErrors } from "@/lib/http";
+import { DEFAULT_LOCALE, isLocale } from "@/lib/i18n/config";
 import { clientKey, hitLimit } from "@/lib/ratelimit";
 import { getSettings } from "@/lib/settings";
 
@@ -29,9 +30,13 @@ export const GET = withErrors(async (req: NextRequest) => {
   const limit = await hitLimit(`reviews:${clientKey(req)}`, LIMIT, WINDOW_SECONDS);
   if (!limit.allowed) throw rateLimited(limit.retryAfter, "Too many requests.");
 
+  // The page's language (?lang=fr): Google translates the reviews into it.
+  const lang = req.nextUrl.searchParams.get("lang");
+  const locale = isLocale(lang) ? lang : DEFAULT_LOCALE;
+
   let reviews;
   try {
-    reviews = await getGoogleReviews(googlePlaceIds);
+    reviews = await getGoogleReviews(googlePlaceIds, locale);
   } catch {
     throw new HttpError(502, "upstream_unavailable", "Reviews are unavailable right now.", undefined, NO_STORE);
   }

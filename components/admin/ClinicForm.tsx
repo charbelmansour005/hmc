@@ -2,9 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { TRANSLATION_LOCALES, type TranslationLocale } from "@/lib/i18n/config";
 import type { ClinicDTO } from "@/lib/types";
 import { sendMultipart, type FieldErrors } from "./api";
 import { ImageField } from "./ImageField";
+import { TranslationsCard, translationValues, type TranslationField } from "./TranslationsCard";
 import { buttonClass, Card, Field, inputClass, Notice } from "./ui";
 
 type BookableOption = { id: string; label: string; group: string };
@@ -17,6 +19,9 @@ export function ClinicForm({ clinic, bookable }: { clinic: ClinicDTO | null; boo
   const [serviceId, setServiceId] = useState(clinic?.serviceId ?? "");
   const [imageAlt, setImageAlt] = useState(clinic?.image.alt ?? "");
   const [sortOrder, setSortOrder] = useState(String(clinic?.sortOrder ?? 100));
+  const [translations, setTranslations] = useState(() =>
+    translationValues(clinic?.translations, ["name", "chip", "description", "imageAlt"]),
+  );
   const [image, setImage] = useState<File | null>(null);
   const [fields, setFields] = useState<FieldErrors>({});
   const [error, setError] = useState("");
@@ -27,7 +32,28 @@ export function ClinicForm({ clinic, bookable }: { clinic: ClinicDTO | null; boo
     setBusy(true);
     setError("");
     setFields({});
-    const payload = { name, chip, description, serviceId, imageAlt, sortOrder: Number(sortOrder) };
+    const payload = {
+      name,
+      chip,
+      description,
+      serviceId,
+      imageAlt,
+      sortOrder: Number(sortOrder),
+      translations: Object.fromEntries(
+        TRANSLATION_LOCALES.map((locale) => {
+          const text = translations[locale];
+          return [
+            locale,
+            {
+              name: text.name || null,
+              chip: text.chip || null,
+              description: text.description || null,
+              imageAlt: text.imageAlt || null,
+            },
+          ];
+        }),
+      ),
+    };
     const result = clinic
       ? await sendMultipart<ClinicDTO>(`/api/admin/clinics/${clinic.id}`, "PATCH", payload, image)
       : await sendMultipart<ClinicDTO>("/api/admin/clinics", "POST", payload, image);
@@ -42,6 +68,16 @@ export function ClinicForm({ clinic, bookable }: { clinic: ClinicDTO | null; boo
   };
 
   const err = (key: string) => fields[key];
+
+  const onTranslation = (locale: TranslationLocale, key: string, value: string) =>
+    setTranslations((prev) => ({ ...prev, [locale]: { ...prev[locale], [key]: value } }));
+
+  const translationFields: TranslationField[] = [
+    { key: "name", label: "Name", english: name, maxLength: 80 },
+    { key: "chip", label: "Chip label", english: chip, maxLength: 24 },
+    { key: "description", label: "Short description", english: description, maxLength: 200, multiline: true },
+    { key: "imageAlt", label: "Photo description (alt text)", english: imageAlt, maxLength: 140 },
+  ];
 
   return (
     <form onSubmit={onSubmit} noValidate className="grid gap-6">
@@ -77,6 +113,8 @@ export function ClinicForm({ clinic, bookable }: { clinic: ClinicDTO | null; boo
           <input id="sortOrder" type="number" min={0} max={9999} className={`${inputClass} max-w-40`} value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} />
         </Field>
       </Card>
+
+      <TranslationsCard fields={translationFields} values={translations} onChange={onTranslation} error={err} />
 
       <div className="flex flex-wrap gap-3">
         <button type="submit" className={buttonClass.primary} disabled={busy}>

@@ -1,9 +1,10 @@
 import * as motion from "motion/react-client";
 import Image from "next/image";
 import { telHref } from "@/lib/home-content";
+import type { Messages } from "@/lib/i18n/messages/en";
 import { publicMapboxToken } from "@/lib/mapbox";
 import { bookingWhatsApp } from "@/lib/phone";
-import type { DoctorDTO, HomeSection, PublicClinicItem, SettingsDTO } from "@/lib/types";
+import type { HomeSection, PublicClinicItem, PublicDoctor, PublicSettings } from "@/lib/types";
 import { AppointmentForm } from "./AppointmentForm";
 import { ClinicCard, FeatureCard, ServiceCard } from "./Cards";
 import { RevealCard } from "./RevealCard";
@@ -27,7 +28,7 @@ function SectionHead({ heading, lede }: { heading: string; lede?: string | null 
   );
 }
 
-export function ServiceSection({ section }: { section: HomeSection }) {
+export function ServiceSection({ section, t }: { section: HomeSection; t: Messages }) {
   return (
     <section className="section" id={section.anchor}>
       <div className="container">
@@ -42,7 +43,7 @@ export function ServiceSection({ section }: { section: HomeSection }) {
         {section.features.length > 0 ? (
           <div className="features">
             {section.features.map((item) => (
-              <FeatureCard key={item.id} item={item} />
+              <FeatureCard key={item.id} item={item} t={t} />
             ))}
           </div>
         ) : null}
@@ -51,12 +52,12 @@ export function ServiceSection({ section }: { section: HomeSection }) {
   );
 }
 
-export function ClinicsSection({ clinics }: { clinics: PublicClinicItem[] }) {
+export function ClinicsSection({ clinics, t }: { clinics: PublicClinicItem[]; t: Messages }) {
   if (clinics.length === 0) return null;
   return (
     <section className="section" id="clinics">
       <div className="container">
-        <SectionHead heading="Dedicated clinics" />
+        <SectionHead heading={t.sections.clinics} />
         <div className="grid grid--wide">
           {clinics.map((item) => (
             <ClinicCard key={item.id} item={item} />
@@ -67,19 +68,13 @@ export function ClinicsSection({ clinics }: { clinics: PublicClinicItem[] }) {
   );
 }
 
-const STEPS = [
-  { title: "Book", text: "Choose the team and time that suits you." },
-  { title: "Visit", text: "Meet your clinician in our modern, welcoming center." },
-  { title: "Follow up", text: "Leave with a clear, coordinated next step." },
-];
-
-export function StepsSection() {
+export function StepsSection({ t }: { t: Messages }) {
   return (
     <section className="section" id="how">
       <div className="container">
-        <SectionHead heading="How a visit works" />
+        <SectionHead heading={t.sections.steps} />
         <ol className="steps">
-          {STEPS.map((step, i) => (
+          {t.sections.stepsList.map((step, i) => (
             <RevealCard as="li" className="step" key={step.title}>
               <motion.span className="step-num" variants={pop}>
                 {i + 1}
@@ -94,12 +89,12 @@ export function StepsSection() {
   );
 }
 
-export function TeamSection({ doctors }: { doctors: DoctorDTO[] }) {
+export function TeamSection({ doctors, t }: { doctors: PublicDoctor[]; t: Messages }) {
   if (doctors.length === 0) return null;
   return (
     <section className="section" id="team">
       <div className="container">
-        <SectionHead heading="Meet the team" lede="Full team bios coming soon." />
+        <SectionHead heading={t.sections.team} lede={t.sections.teamLede} />
         <div className="team">
           {doctors.map((doctor) => (
             <RevealCard as="article" className="member" key={doctor.id}>
@@ -131,22 +126,15 @@ export function TeamSection({ doctors }: { doctors: DoctorDTO[] }) {
   );
 }
 
-const REASONS = [
-  "Specialists, dentists and dietitians under one roof",
-  "Straightforward, unhurried appointments",
-  "In-house panoramic X-ray",
-  "Care coordinated across every team",
-];
-
-export function WhySection() {
+export function WhySection({ t, dir }: { t: Messages; dir: "ltr" | "rtl" }) {
   return (
     <section className="section" id="why">
       <div className="container">
-        <SectionHead heading="Why patients choose us" />
+        <SectionHead heading={t.sections.why} />
         <motion.div className="why" {...reveal} variants={fadeUp}>
           <motion.ul variants={cascade(0.12, 0.15)}>
-            {REASONS.map((reason) => (
-              <motion.li key={reason} variants={slideIn}>
+            {t.sections.reasons.map((reason) => (
+              <motion.li key={reason} variants={slideIn(dir)}>
                 <motion.span className="check" aria-hidden="true" variants={pop}>
                   <svg viewBox="0 0 16 16">
                     <motion.path
@@ -170,11 +158,11 @@ export function WhySection() {
   );
 }
 
-export function VisitSection({ settings }: { settings: SettingsDTO }) {
+export function VisitSection({ settings, t }: { settings: PublicSettings; t: Messages }) {
   return (
     <section className="section" id="visit">
       <div className="container">
-        <SectionHead heading="Visit us" />
+        <SectionHead heading={t.sections.visit} />
         <motion.div className="visit" {...reveal} variants={cascade(0.12)}>
           <AppointmentForm whatsapp={bookingWhatsApp(settings)} />
 
@@ -182,21 +170,25 @@ export function VisitSection({ settings }: { settings: SettingsDTO }) {
             <ul className="contact-list">
               <li>
                 <PinIcon aria-hidden />
-                {settings.address ?? "[Address]"}
+                {settings.address ?? t.sections.addressPlaceholder}
               </li>
               <li>
                 <PhoneIcon aria-hidden />
-                <a href={telHref(settings.phone)}>{settings.phone}</a>
+                <a href={telHref(settings.phone)} dir="ltr">
+                  {settings.phone}
+                </a>
               </li>
               {settings.email ? (
                 <li>
                   <MailIcon aria-hidden />
-                  <a href={`mailto:${settings.email}`}>{settings.email}</a>
+                  <a href={`mailto:${settings.email}`} dir="ltr">
+                    {settings.email}
+                  </a>
                 </li>
               ) : null}
               <li>
                 <ClockIcon aria-hidden />
-                {settings.openingHours ? <OpeningHours value={settings.openingHours} /> : "[Hours]"}
+                {settings.openingHours ? <OpeningHours value={settings.openingHours} /> : t.sections.hoursPlaceholder}
               </li>
             </ul>
             <div className="map">

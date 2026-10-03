@@ -1,5 +1,7 @@
 import { Schema, model, models, type Model, type Types } from "mongoose";
-import { BOOKING_CHANNELS, MAX_GOOGLE_PLACES, type BookingChannel } from "../lib/categories";
+import { BOOKING_CHANNELS, CATEGORIES, MAX_GOOGLE_PLACES, type BookingChannel, type Category } from "../lib/categories";
+import type { SettingsText } from "../lib/types";
+import { translated, translationsField, type StoredTranslations } from "./_translations";
 
 export const SETTINGS_SINGLETON = "site";
 
@@ -18,6 +20,10 @@ export interface SiteSettingsDoc {
   whatsapp?: string | null;
   /** Google Place IDs whose reviews the site shows (the only Places data we may store). */
   googlePlaceIds?: string[];
+  /** Service sections the admin has hidden from the website; their services stay in the CMS. */
+  hiddenSections?: Category[];
+  /** French and Arabic copies of the address and opening hours. Missing on documents written before it existed. */
+  translations?: StoredTranslations<SettingsText>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -47,6 +53,11 @@ const SiteSettingsSchema = new Schema<SiteSettingsDoc>(
         message: `At most ${MAX_GOOGLE_PLACES} Google places.`,
       },
     },
+    hiddenSections: { type: [{ type: String, enum: CATEGORIES }], default: [] },
+    translations: translationsField({
+      address: translated(160),
+      openingHours: translated(80),
+    }),
   },
   { timestamps: true },
 );

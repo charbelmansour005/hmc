@@ -61,6 +61,15 @@ export function MailIcon(props: { "aria-hidden"?: boolean }) {
   );
 }
 
+export function GlobeIcon(props: { "aria-hidden"?: boolean }) {
+  return (
+    <svg {...stroke} {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3c2.6 2.9 3.9 5.9 3.9 9s-1.3 6.1-3.9 9c-2.6-2.9-3.9-5.9-3.9-9S9.4 5.9 12 3z" />
+    </svg>
+  );
+}
+
 export function PersonSilhouette() {
   return (
     <svg viewBox="0 0 64 64">

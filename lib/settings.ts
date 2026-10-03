@@ -1,13 +1,18 @@
 import "server-only";
 import { SETTINGS_SINGLETON, SiteSettings, type SiteSettingsDoc } from "@/models/SiteSettings";
+import { isCategory } from "./categories";
 import { connectDB } from "./db";
-import { toSettingsDTO } from "./dto";
+import { toSettingsDTO, toSettingsTranslations } from "./dto";
 import { parseWith } from "./http";
 import { settingsSchema, type SettingsInput, type SettingsUpdateInput } from "./schemas";
-import type { SettingsDTO } from "./types";
+import { mergeTranslations } from "./translations";
+import type { SettingsDTO, SettingsText, Translations } from "./types";
+
+/** The whole settings document, with a copy of the translated text for every language. */
+type Settings = Omit<SettingsInput, "translations"> & { translations: Translations<SettingsText> };
 
 // Keep in step with seedSettings in scripts/seed-data.ts.
-export const SETTINGS_DEFAULTS: SettingsInput = {
+export const SETTINGS_DEFAULTS: Settings = {
   phone: "+961 4 520 065",
   email: null,
   address: "Ground floor, Naccache, Green Zone A, bldg, 71, Naqqache",
@@ -16,9 +21,20 @@ export const SETTINGS_DEFAULTS: SettingsInput = {
   bookingChannel: "whatsapp",
   whatsapp: null,
   googlePlaceIds: ["ChIJF7o0ARI_HxURCkCkKINPVC8"],
+  hiddenSections: [],
+  translations: {
+    fr: {
+      address: "Rez-de-chaussée, immeuble 71, Green Zone A, Naccache",
+      openingHours: "Lun–Ven, 8h30 – 18h00 · Sam et dim fermé",
+    },
+    ar: {
+      address: "الطابق الأرضي، مبنى 71، Green Zone A، النقاش",
+      openingHours: "الإثنين–الجمعة، 8:30 ص – 6:00 م · السبت والأحد مغلق",
+    },
+  },
 };
 
-function pickSettings(doc: SiteSettingsDoc): SettingsInput {
+function pickSettings(doc: SiteSettingsDoc): Settings {
   return {
     phone: doc.phone,
     email: doc.email ?? null,
@@ -28,6 +44,8 @@ function pickSettings(doc: SiteSettingsDoc): SettingsInput {
     bookingChannel: doc.bookingChannel ?? SETTINGS_DEFAULTS.bookingChannel,
     whatsapp: doc.whatsapp ?? null,
     googlePlaceIds: [...(doc.googlePlaceIds ?? [])],
+    hiddenSections: (doc.hiddenSections ?? []).filter(isCategory),
+    translations: toSettingsTranslations(doc.translations),
   };
 }
 
@@ -46,10 +64,12 @@ export async function getSettings(): Promise<SettingsDTO> {
 export async function updateSettings(patch: SettingsUpdateInput): Promise<SettingsDTO> {
   await connectDB();
   const current = await SiteSettings.findOne({ singleton: SETTINGS_SINGLETON }).lean();
+  const stored = current ? pickSettings(current) : SETTINGS_DEFAULTS;
   const merged = parseWith(settingsSchema, {
-    ...SETTINGS_DEFAULTS,
-    ...(current ? pickSettings(current) : {}),
+    ...stored,
     ...patch,
+    // A language left out of the patch keeps its stored translation.
+    translations: mergeTranslations(stored.translations, patch.translations),
   });
 
   const write = () =>

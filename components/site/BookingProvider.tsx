@@ -2,7 +2,11 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { upcomingBookingDates } from "@/lib/booking-dates";
+import { INTL_LOCALE, type Locale } from "@/lib/i18n/config";
+import { fmt } from "@/lib/i18n/format";
+import type { Messages } from "@/lib/i18n/messages/en";
 import type { BookingGroup } from "@/lib/types";
+import { useI18n } from "./I18nProvider";
 
 export type DayOption = { value: string; label: string; short: string };
 export type BookingField = "service" | "date";
@@ -16,6 +20,8 @@ type BookingState = {
   setDate: (value: string) => void;
   days: DayOption[];
   serviceLabel: (id: string) => string | null;
+  /** The service's English name: the WhatsApp request repeats it for staff. */
+  serviceLabelEn: (id: string) => string | null;
   dayLabel: (value: string) => string | null;
   errors: Set<BookingField>;
   setErrors: (fields: BookingField[]) => void;
@@ -43,12 +49,17 @@ export function flash(el: HTMLElement | null) {
 }
 
 /** The next two weeks without the days the clinic is closed (weekends). */
-function nextDays(): DayOption[] {
-  const fmt = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" });
+function nextDays(locale: Locale, t: Messages): DayOption[] {
+  const day = new Intl.DateTimeFormat(INTL_LOCALE[locale], { weekday: "short", day: "numeric", month: "short" });
   return upcomingBookingDates().map(({ value, date, offset }) => {
-    const short = fmt.format(date);
-    const prefix = offset === 0 ? "Today · " : offset === 1 ? "Tomorrow · " : "";
-    return { value, label: prefix + short, short };
+    const short = day.format(date);
+    const label =
+      offset === 0
+        ? fmt(t.booking.today, { date: short })
+        : offset === 1
+          ? fmt(t.booking.tomorrow, { date: short })
+          : short;
+    return { value, label, short };
   });
 }
 
@@ -61,6 +72,7 @@ export function BookingProvider({
   phone: string;
   children: React.ReactNode;
 }) {
+  const { locale, t } = useI18n();
   const [serviceId, setServiceIdState] = useState("");
   const [date, setDateState] = useState("");
   // Dates are computed on the client to avoid a server/client timezone mismatch.
@@ -70,11 +82,11 @@ export function BookingProvider({
   const contactRef = useRef<HTMLFormElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => setDays(nextDays()), []);
+  useEffect(() => setDays(nextDays(locale, t)), [locale, t]);
 
   const labels = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const g of groups) for (const o of g.options) map.set(o.id, o.label);
+    const map = new Map<string, { label: string; labelEn: string }>();
+    for (const g of groups) for (const o of g.options) map.set(o.id, o);
     return map;
   }, [groups]);
 
@@ -125,7 +137,8 @@ export function BookingProvider({
       date,
       setDate,
       days,
-      serviceLabel: (id) => labels.get(id) ?? null,
+      serviceLabel: (id) => labels.get(id)?.label ?? null,
+      serviceLabelEn: (id) => labels.get(id)?.labelEn ?? null,
       dayLabel: (v) => days.find((d) => d.value === v)?.short ?? null,
       errors,
       setErrors: (fields) => setErrorSet(new Set(fields)),

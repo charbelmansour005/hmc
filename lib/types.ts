@@ -1,6 +1,7 @@
 // Plain DTOs: the only shapes that cross from the data layer into components.
 // Every id is a string; every date is an ISO string. No Mongoose types here.
 import type { Accent, AppointmentStatus, BookingChannel, Category, ServiceDisplay } from "./categories";
+import type { TranslationLocale } from "./i18n/config";
 
 export type ImageStorage = "external" | "local" | "blob";
 
@@ -8,6 +9,38 @@ export type ImageDTO = {
   url: string;
   alt: string;
   storage: ImageStorage;
+};
+
+// Translated copies of an item's text, one per language in TRANSLATION_LOCALES.
+// A null field (or an empty tag list) means "not translated: show the English".
+export type Translations<T> = Record<TranslationLocale, T>;
+
+export type ServiceText = {
+  name: string | null;
+  bookingLabel: string | null;
+  chip: string | null;
+  description: string | null;
+  tags: string[];
+  imageAlt: string | null;
+};
+
+export type ClinicText = {
+  name: string | null;
+  chip: string | null;
+  description: string | null;
+  imageAlt: string | null;
+};
+
+export type DoctorText = {
+  name: string | null;
+  specialty: string | null;
+  bio: string | null;
+  photoAlt: string | null;
+};
+
+export type SettingsText = {
+  address: string | null;
+  openingHours: string | null;
 };
 
 export type ServiceDTO = {
@@ -23,6 +56,7 @@ export type ServiceDTO = {
   image: ImageDTO;
   bookAsId: string | null;
   sortOrder: number;
+  translations: Translations<ServiceText>;
   updatedAt: string | null;
 };
 
@@ -35,6 +69,7 @@ export type ClinicDTO = {
   image: ImageDTO;
   serviceId: string;
   sortOrder: number;
+  translations: Translations<ClinicText>;
   updatedAt: string | null;
 };
 
@@ -47,6 +82,7 @@ export type DoctorDTO = {
   photo: ImageDTO | null;
   accent: Accent;
   sortOrder: number;
+  translations: Translations<DoctorText>;
   updatedAt: string | null;
 };
 
@@ -59,6 +95,9 @@ export type SettingsDTO = {
   bookingChannel: BookingChannel;
   whatsapp: string | null;
   googlePlaceIds: string[];
+  /** Service sections hidden from the website by the admin. */
+  hiddenSections: Category[];
+  translations: Translations<SettingsText>;
   updatedAt: string | null;
 };
 
@@ -73,17 +112,27 @@ export type AppointmentDTO = {
   createdAt: string;
 };
 
-export type BookingOption = { id: string; label: string };
+/** A service in the booking dropdown. `labelEn` is its English name, which the WhatsApp request repeats for staff. */
+export type BookingOption = { id: string; label: string; labelEn: string };
 export type BookingGroup = { label: string; options: BookingOption[] };
 
+// What the public page renders: an item's text in the page's language only
+// (lib/i18n/content.ts), so the other languages never reach the page.
+export type PublicService = Omit<ServiceDTO, "translations">;
+export type PublicClinic = Omit<ClinicDTO, "translations">;
+export type PublicDoctor = Omit<DoctorDTO, "translations">;
+export type PublicSettings = Omit<SettingsDTO, "translations">;
+
 /** A card or feature on the public page, with the service id it books. */
-export type PublicServiceItem = ServiceDTO & { bookingId: string };
-export type PublicClinicItem = ClinicDTO & { bookingId: string };
+export type PublicServiceItem = PublicService & { bookingId: string };
+export type PublicClinicItem = PublicClinic & { bookingId: string };
 
 export type HomeSection = {
   category: Category;
   heading: string;
   lede: string | null;
+  /** Short name in the nav and the hero directory. */
+  navLabel: string;
   anchor: string;
   wide: boolean;
   cards: PublicServiceItem[];
@@ -127,12 +176,12 @@ export type GoogleReviewsDTO = {
 };
 
 export type HomeContent = {
-  settings: SettingsDTO;
+  settings: PublicSettings;
   /** The reviews section renders only when an API key and a Place ID are configured. */
   reviewsEnabled: boolean;
   sections: HomeSection[];
   clinics: PublicClinicItem[];
-  doctors: DoctorDTO[];
+  doctors: PublicDoctor[];
   bookingGroups: BookingGroup[];
   /** Full section list (footer). */
   nav: NavLink[];

@@ -1,8 +1,9 @@
 # Hajj Medical Center
 
 The clinic's public website plus a small CMS, built with Next.js 15 (App Router)
-and MongoDB. Staff sign in at `/admin` to edit services, clinics, the team and
-site settings. Appointment requests from the site go to the clinic's WhatsApp
+and MongoDB. The site is in English, French and Arabic. Staff sign in at
+`/admin` to edit services, clinics, the team and site settings, in all three
+languages. Appointment requests from the site go to the clinic's WhatsApp
 or to the CMS inbox (chosen in Settings), and a "What patients say" section
 shows live Google reviews.
 
@@ -40,7 +41,7 @@ Environment Variables** for deployment. `.env.example` lists the names.
 | `SESSION_SECRET` | **yes** (runtime) | app | 32+ chars (`openssl rand -base64 48`). Signs admin JWTs and salts the rate-limit IP hash. Keep it **stable** — changing it logs every admin out. |
 | `ADMIN_USERNAME` | **yes** (seed) | seed only | The admin login. Only the seed script reads this, not the running app. |
 | `ADMIN_PASSWORD` | **yes** (seed) | seed only | 12+ chars. Only the seed script reads this. |
-| `APP_URL` | optional | app | Public URL, e.g. `https://…`. Used **only** in the appointment-notification email link. |
+| `APP_URL` | recommended | app | Public URL, e.g. `https://…`. Used for the canonical and `hreflang` links between the three languages, the sitemap, and the appointment-notification email link. On Vercel the production domain is used when it is unset. |
 | `BLOB_READ_WRITE_TOKEN` | for uploads | app | Enables Vercel Blob. **Required to upload images in the CMS on Vercel** (the filesystem there is read-only). Auto-added when you create a Blob store. |
 | `GOOGLE_PLACES_API_KEY` | optional | app | Server-only key for the Google reviews section (never `NEXT_PUBLIC_`). The Place ID is set in the CMS. Without the key the section is hidden. See [Google reviews](#google-reviews). |
 | `MAPBOX_TOKEN` | optional | app | Public Mapbox token (`pk.…`) for the "Visit us" map (dark "night" style in dark mode). Read at request time; secret `sk.…` tokens are ignored. Restrict it to your site URLs in the Mapbox dashboard. Without it, a Google map is shown. |
@@ -66,7 +67,18 @@ npm run seed                              # content (first run) + admin
 npm run seed -- --admin-only              # admin account only
 npm run seed -- --content                 # re-apply seed content (still never overwrites)
 npm run seed -- --reset-admin-password    # set admin password from env, log out sessions
+npm run seed -- --translations            # add the seed's French and Arabic to an existing database
+npm run seed -- --translations --dry-run  # …or only report what that would add
 ```
+
+`--translations` is for a database that was seeded before the site was
+translated. It adds the seed's French and Arabic to items that are still as
+seeded, and does nothing else: a translation is filled in only where there is
+none yet **and** the English text is still the seed's own. It never overwrites a
+translation, never brings back a deleted item, and lists the items it left
+alone because their English was edited in the CMS (translate those there). It
+is safe to run more than once. A new database doesn't need it: the normal seed
+inserts every item with its translations.
 
 The CMS supports **exactly one admin**; the seed refuses to create a second.
 
@@ -95,6 +107,52 @@ The CMS supports **exactly one admin**; the seed refuses to create a second.
 
 **Tip:** set the Vercel function region close to your Atlas cluster's region to
 reduce database latency.
+
+## Languages
+
+The site is one page in three languages: English at `/`, French at `/fr` and
+Arabic at `/ar` (right-to-left, with its own typefaces). Each is a real page
+with its own `<html lang dir>`, title and description, and they point at each
+other with `hreflang` links (set `APP_URL` so those are absolute).
+
+- **Which language a visitor gets.** `/fr` and `/ar` always show their
+  language. `/` opens in the language the visitor picked in the language menu,
+  else the best match for their browser's languages: French and Arabic browsers
+  are redirected to `/fr` or `/ar`, everyone else gets English
+  (`middleware.ts`). Search engines send no language preference, so they get
+  English at `/`.
+- **The language menu** (header, phone menu and footer) links to `/en`, `/fr`
+  and `/ar`. A pick is remembered in the `hmc_lang` cookie for a year; it is a
+  preference only, with no tracking. `/en` records English and redirects to
+  `/`.
+- **Interface wording** (buttons, headings, messages) lives in
+  `lib/i18n/messages/en.ts`, `fr.ts` and `ar.ts`. English is the source; the
+  other two must have the same keys, or the type check fails.
+- **Content** (services, clinics, team, address, opening hours) is translated
+  in the CMS: every form has a *Translations* card with a French and an Arabic
+  field for each piece of text. An empty field is fine: that page shows the
+  English text. Lists mark items that have no French or Arabic name yet.
+- **What stays in English:** the CMS itself, the logo, the notification email
+  and the service name stored with CMS-inbox requests. A WhatsApp request is
+  written in the visitor's language, with the service's English name in
+  brackets so staff can match it at a glance.
+- **Adding a language** means: add it to `LOCALES` (and `TRANSLATION_LOCALES`)
+  in `lib/i18n/config.ts`, add its dictionary, add a root layout and page under
+  `app/(site)/`, and add its key to `translationsOf` in `lib/schemas.ts`.
+
+## Showing and hiding service sections
+
+**CMS → Services** lists the five service sections of the page (specialists,
+nutrition, dental, esthetics, movement). Each has a **Hide from website** /
+**Show on website** switch. A hidden section is left out of the site in every
+language: its heading and cards, its link in the nav and footer, its column in
+the hero, and its services in the booking list (the appointments API refuses
+them too). Nothing is deleted, so showing it again brings everything back.
+
+A card or clinic in another section can book a service that sits in a hidden
+section (the seed's *Dietitian* card books a nutrition service, for example).
+It stays on the page but no longer preselects anything; the CMS lists say so
+next to such cards. A section with no services is hidden either way.
 
 ## Appointment requests: WhatsApp or the CMS inbox
 
@@ -151,13 +209,19 @@ How it behaves, and why:
 - **Attribution.** Each review shows the author's name, photo and profile link
   and links to the review on Google Maps; translated reviews are labelled, with
   a toggle to the original; the section carries the "Google Maps" attribution.
+- **Language.** The section asks Google for the page's language, so on `/fr`
+  and `/ar` Google translates the reviews written in another language and words
+  the "2 weeks ago" times. It is still one request per place.
 - If the key or Place ID is missing, or Google fails or takes over 6 s, the
   section is simply not shown.
 
 ## How it fits together
 
 - `app/(site)/` — the public site (server components with small client islands
-  for the header, booking and reveal animations).
+  for the header, booking and reveal animations). `(en)`, `(fr)` and `(ar)` are
+  one root layout per language; they all render the same `HomePage`.
+- `lib/i18n/` — the languages: configuration, the three dictionaries, and the
+  helpers that pick translated content.
 - `app/admin/` — the CMS (login, dashboard, services/clinics/team/settings,
   appointments). Every page is dynamic and calls the admin guard first.
 - `app/api/` — public endpoints (`appointments`, `media`, `reviews`) and
@@ -165,9 +229,9 @@ How it behaves, and why:
 - `lib/` — the data layer (all `server-only`): DB connection, validation
   (zod), DTO mappers, storage, auth (jose), rate limiting, mail.
 - `models/` — Mongoose schemas.
-- `middleware.ts` — redirects unauthenticated visitors away from `/admin`
-  (a UX convenience; the real authorization check runs inside every page and
-  route handler).
+- `middleware.ts` — opens `/` in the visitor's language, and redirects
+  unauthenticated visitors away from `/admin` (a UX convenience; the real
+  authorization check runs inside every page and route handler).
 
 ## Security notes
 

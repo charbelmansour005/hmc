@@ -6,12 +6,15 @@ type Theme = "light" | "dark";
 
 const META_COLOR: Record<Theme, string> = { light: "#eaf1f8", dark: "#0d151d" };
 
+/** What the button does, said in words (the CMS uses these; the public site passes its own language). */
+const LABELS = { toLight: "Switch to light mode", toDark: "Switch to dark mode" };
+
 /** Light/dark toggle. Dark is the default (rendered on the server); the head
  *  script switches to light for visitors who chose it. This flips and
  *  remembers the choice. Both icons are always rendered: CSS (theme.css)
  *  morphs between them off data-theme, so the right one shows from the first
  *  paint with no flicker. */
-export function ThemeToggle({ className }: { className?: string }) {
+export function ThemeToggle({ className, labels = LABELS }: { className?: string; labels?: typeof LABELS }) {
   const [theme, setTheme] = useState<Theme>("dark");
 
   useEffect(() => {
@@ -32,7 +35,7 @@ export function ThemeToggle({ className }: { className?: string }) {
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", META_COLOR[next]);
   };
 
-  const label = theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
+  const label = theme === "dark" ? labels.toLight : labels.toDark;
 
   return (
     <button type="button" className={className} onClick={toggle} aria-label={label} title={label}>

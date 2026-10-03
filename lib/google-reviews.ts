@@ -1,5 +1,6 @@
 import "server-only";
 import { REVIEW_MIN_RATING } from "./categories";
+import type { Locale } from "./i18n/config";
 import type { GoogleReviewDTO, GoogleReviewsDTO } from "./types";
 
 // Reviews for the public site from the Google Places API (New), Place Details.
@@ -58,8 +59,8 @@ function httpsUrl(value: string | undefined): string | null {
   }
 }
 
-async function fetchPlace(placeId: string, key: string): Promise<Place> {
-  const res = await fetch(`${PLACE_DETAILS}${encodeURIComponent(placeId)}?languageCode=en`, {
+async function fetchPlace(placeId: string, key: string, locale: Locale): Promise<Place> {
+  const res = await fetch(`${PLACE_DETAILS}${encodeURIComponent(placeId)}?languageCode=${locale}`, {
     headers: { "X-Goog-Api-Key": key, "X-Goog-FieldMask": FIELD_MASK },
     cache: "no-store",
     signal: AbortSignal.timeout(TIMEOUT_MS),
@@ -101,14 +102,15 @@ function toReview(review: PlaceReview): GoogleReviewDTO | null {
 const publishedAt = (r: GoogleReviewDTO) => (r.publishTime ? Date.parse(r.publishTime) || 0 : 0);
 
 /**
- * Live reviews for the configured places, newest first. Returns null when no
- * key or Place ID is configured; throws when every place fails to load.
+ * Live reviews for the configured places, newest first, in the language of the
+ * page asking for them. Returns null when no key or Place ID is configured;
+ * throws when every place fails to load.
  */
-export async function getGoogleReviews(placeIds: string[]): Promise<GoogleReviewsDTO | null> {
+export async function getGoogleReviews(placeIds: string[], locale: Locale): Promise<GoogleReviewsDTO | null> {
   const key = googlePlacesKey();
   if (!key || placeIds.length === 0) return null;
 
-  const results = await Promise.allSettled(placeIds.map((id) => fetchPlace(id, key)));
+  const results = await Promise.allSettled(placeIds.map((id) => fetchPlace(id, key, locale)));
   const places: Place[] = [];
   results.forEach((result, i) => {
     if (result.status === "fulfilled") places.push(result.value);

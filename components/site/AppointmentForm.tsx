@@ -1,32 +1,31 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { DEFAULT_LOCALE, INTL_LOCALE } from "@/lib/i18n/config";
+import { fmt, ltr } from "@/lib/i18n/format";
+import type { Messages } from "@/lib/i18n/messages/en";
 import { isValidPhone, whatsappUrl } from "@/lib/phone";
 import { flash, useBooking, type BookingField } from "./BookingProvider";
+import { useI18n } from "./I18nProvider";
 import { fadeUp } from "./motion/variants";
 import { smoothScrollTo } from "./scroll";
 
 type ApiError = { error?: { code?: string; message?: string; fields?: Record<string, string> } };
 type ContactField = "name" | "phone";
 
-const longDate = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-
-/** "2026-09-29" -> "Tuesday 29 September 2026" (a calendar date, so no time zone shift). */
-function formatDay(value: string): string {
-  const [y, m, d] = value.split("-").map(Number);
-  return longDate.format(new Date(y, m - 1, d));
-}
-
-/** The WhatsApp message the visitor sends; *…* is bold in WhatsApp. */
-function requestMessage(r: { name: string; phone: string; service: string; date: string }): string {
+/** The WhatsApp message the visitor sends, in the page's language; *…* is bold in WhatsApp. */
+function requestMessage(
+  m: Messages["form"]["whatsappMessage"],
+  r: { name: string; phone: string; service: string; date: string },
+): string {
   return [
-    "Hello Hajj Medical Center, I'd like to request an appointment.",
+    m.greeting,
     "",
-    `*Name:* ${r.name}`,
-    `*Phone:* ${r.phone}`,
-    `*Service:* ${r.service}`,
-    `*Preferred date:* ${formatDay(r.date)}`,
+    fmt(m.name, { value: r.name }),
+    fmt(m.phone, { value: r.phone }),
+    fmt(m.service, { value: r.service }),
+    fmt(m.date, { value: r.date }),
   ].join("\n");
 }
 
@@ -53,6 +52,7 @@ function openWhatsApp(url: string) {
 // Without it, the request is saved to the CMS inbox via /api/appointments.
 export function AppointmentForm({ whatsapp }: { whatsapp: string | null }) {
   const booking = useBooking();
+  const { locale, dir, t } = useI18n();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [website, setWebsite] = useState(""); // honeypot
@@ -61,6 +61,23 @@ export function AppointmentForm({ whatsapp }: { whatsapp: string | null }) {
   const [chatUrl, setChatUrl] = useState("");
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
+
+  /** "2026-09-29" -> "Tuesday 29 September 2026" (a calendar date, so no time zone shift). */
+  const formatDay = useMemo(() => {
+    const longDate = new Intl.DateTimeFormat(INTL_LOCALE[locale], {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    return (value: string) => {
+      const [y, m, d] = value.split("-").map(Number);
+      return longDate.format(new Date(y, m - 1, d));
+    };
+  }, [locale]);
+
+  // A phone number inside an Arabic sentence must keep its left-to-right order.
+  const inText = (number: string) => (dir === "rtl" ? ltr(number) : number);
 
   // A WhatsApp hand-off note describes one exact request; drop it once the
   // service or date changes so its "open again" link is never stale.
@@ -94,28 +111,28 @@ export function AppointmentForm({ whatsapp }: { whatsapp: string | null }) {
     ];
     if (invalid.length > 0) {
       setFieldErrors(new Set(invalid));
-      setError(
-        invalid.includes("phone") && phone.trim()
-          ? "Please enter a valid phone number."
-          : "Please enter your full name.",
-      );
+      setError(invalid.includes("phone") && phone.trim() ? t.form.errors.phoneInvalid : t.form.errors.nameMissing);
       document.getElementById(invalid[0])?.focus();
       return;
     }
 
+    // The clinic's staff work in English: on a translated page the service is
+    // followed by its English name, e.g. "أمراض القلب (Cardiology)".
+    const service = booking.serviceLabel(booking.serviceId) ?? "";
+    const serviceEn = booking.serviceLabelEn(booking.serviceId);
     const url = whatsappUrl(
       digits,
-      requestMessage({
+      requestMessage(t.form.whatsappMessage, {
         name: name.trim().replace(/\s+/g, " "),
-        phone: phone.trim(),
-        service: booking.serviceLabel(booking.serviceId) ?? "",
-        date: booking.date,
+        phone: inText(phone.trim()),
+        service: serviceEn && serviceEn !== service ? `${service} (${serviceEn})` : service,
+        date: formatDay(booking.date),
       }),
     );
     openWhatsApp(url);
     setChatUrl(url);
     const first = name.trim().split(/\s+/)[0];
-    setSuccess(`Almost done, ${first}! Tap Send in WhatsApp to deliver your request, and we'll reply to confirm.`);
+    setSuccess(fmt(t.form.whatsappSent, { name: first }));
   };
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -136,7 +153,7 @@ export function AppointmentForm({ whatsapp }: { whatsapp: string | null }) {
 
     if (missingBooking.length > 0) {
       booking.setErrors(missingBooking);
-      setError("Please choose a service and a preferred date in the booking card first.");
+      setError(t.form.errors.bookingMissing);
       const card = booking.bookingRef.current;
       if (card) smoothScrollTo(card, "center");
       flash(card);
@@ -168,7 +185,7 @@ export function AppointmentForm({ whatsapp }: { whatsapp: string | null }) {
 
       if (res.status === 201) {
         const first = name.trim().split(/\s+/)[0];
-        setSuccess(`Thanks, ${first}! We've received your request and will call you to confirm.`);
+        setSuccess(fmt(t.form.sent, { name: first }));
         setName("");
         setPhone("");
         setWebsite("");
@@ -184,9 +201,14 @@ export function AppointmentForm({ whatsapp }: { whatsapp: string | null }) {
         ...("preferredDate" in fields ? (["date"] as const) : []),
       ];
       if (bookingFields.length > 0) booking.setErrors(bookingFields);
-      setError(body.error?.message ?? `Something went wrong. Please call us on ${booking.phone}.`);
+
+      // The API answers in English: other languages go by its error code instead.
+      const { invalid_payload, rate_limited, whatsapp_only } = t.form.errors;
+      const byCode: Record<string, string> = { invalid_payload, rate_limited, whatsapp_only };
+      const message = locale === DEFAULT_LOCALE ? body.error?.message : byCode[body.error?.code ?? ""];
+      setError(message ?? fmt(t.form.errors.generic, { phone: inText(booking.phone) }));
     } catch {
-      setError(`We couldn't send your request. Please check your connection or call us on ${booking.phone}.`);
+      setError(fmt(t.form.errors.network, { phone: inText(booking.phone) }));
     } finally {
       setSending(false);
     }
@@ -205,14 +227,14 @@ export function AppointmentForm({ whatsapp }: { whatsapp: string | null }) {
       variants={fadeUp}
     >
       <div className="field">
-        <label htmlFor="name">Name</label>
+        <label htmlFor="name">{t.form.name}</label>
         <input
           ref={booking.nameRef}
           className={inputClass("name")}
           id="name"
           name="name"
           type="text"
-          placeholder="Your full name"
+          placeholder={t.form.namePlaceholder}
           autoComplete="name"
           required
           maxLength={80}
@@ -224,13 +246,13 @@ export function AppointmentForm({ whatsapp }: { whatsapp: string | null }) {
         />
       </div>
       <div className="field">
-        <label htmlFor="phone">Phone</label>
+        <label htmlFor="phone">{t.form.phone}</label>
         <input
           className={inputClass("phone")}
           id="phone"
           name="phone"
           type="tel"
-          placeholder="Your phone number"
+          placeholder={t.form.phonePlaceholder}
           autoComplete="tel"
           required
           maxLength={24}
@@ -255,7 +277,7 @@ export function AppointmentForm({ whatsapp }: { whatsapp: string | null }) {
         </label>
       </div>
       <button className="btn btn-primary btn-block" type="submit" disabled={sending}>
-        {whatsapp ? "Send on WhatsApp" : sending ? "Sending…" : "Send request"}
+        {whatsapp ? t.form.sendWhatsApp : sending ? t.form.sending : t.form.send}
       </button>
       <p className={success ? "form-success is-visible" : "form-success"} role="status" aria-live="polite">
         {success}
@@ -263,7 +285,7 @@ export function AppointmentForm({ whatsapp }: { whatsapp: string | null }) {
           <>
             {" "}
             <a className="form-success-link" href={chatUrl} target="_blank" rel="noopener noreferrer">
-              WhatsApp didn&apos;t open? Open it here
+              {t.form.whatsappReopen}
             </a>
           </>
         ) : null}

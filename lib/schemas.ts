@@ -9,6 +9,7 @@ import {
   MAX_GOOGLE_PLACES,
   SERVICE_DISPLAYS,
 } from "./categories";
+import type { TranslationLocale } from "./i18n/config";
 import { isValidPhone, whatsappDigits } from "./phone";
 
 const text = (min: number, max: number) => z.string().trim().min(min).max(max);
@@ -27,6 +28,49 @@ const sortOrder = z.coerce.number().int().min(0).max(9999);
 // Phone numbers: digits with optional +, spaces, dashes, dots and parentheses; 7–15 digits.
 export const phoneSchema = z.string().trim().max(24).refine(isValidPhone, "Enter a valid phone number");
 
+// ------------------------------------------------------------ translations
+// French and Arabic copies of an item's text, with the same limits as the
+// English. Every field is optional: an empty one shows the English text on
+// that language's page. A language left out of an update keeps what it had.
+const translationsOf = <T extends z.ZodTypeAny>(copy: T) =>
+  z.object({ fr: copy.optional(), ar: copy.optional() } satisfies Record<TranslationLocale, unknown>).strict();
+
+const serviceText = z
+  .object({
+    name: optionalText(80),
+    bookingLabel: optionalText(60),
+    chip: optionalText(24),
+    description: optionalText(200),
+    tags: z.array(text(1, 20)).max(6).default([]),
+    imageAlt: optionalText(140),
+  })
+  .strict();
+
+const clinicText = z
+  .object({
+    name: optionalText(80),
+    chip: optionalText(24),
+    description: optionalText(200),
+    imageAlt: optionalText(140),
+  })
+  .strict();
+
+const doctorText = z
+  .object({
+    name: optionalText(80),
+    specialty: optionalText(60),
+    bio: optionalText(160),
+    photoAlt: optionalText(140),
+  })
+  .strict();
+
+const settingsText = z
+  .object({
+    address: optionalText(160),
+    openingHours: optionalText(80),
+  })
+  .strict();
+
 // ---------------------------------------------------------------- services
 export const serviceBase = z
   .object({
@@ -40,6 +84,7 @@ export const serviceBase = z
     imageAlt: text(3, 140),
     sortOrder,
     bookAsId: objectIdString.nullish().transform((v) => v ?? null),
+    translations: translationsOf(serviceText).optional(),
   })
   .strict();
 
@@ -57,6 +102,7 @@ export const clinicBase = z
     imageAlt: text(3, 140),
     serviceId: objectIdString,
     sortOrder,
+    translations: translationsOf(clinicText).optional(),
   })
   .strict();
 
@@ -75,6 +121,7 @@ export const doctorBase = z
     photoAlt: optionalText(140),
     sortOrder,
     removePhoto: z.boolean().optional(),
+    translations: translationsOf(doctorText).optional(),
   })
   .strict();
 
@@ -112,6 +159,13 @@ export const settingsBase = z
       .array(z.string().trim().regex(/^[A-Za-z0-9_-]{10,256}$/, "That doesn't look like a Google Place ID."))
       .max(MAX_GOOGLE_PLACES, `Add at most ${MAX_GOOGLE_PLACES} places.`)
       .transform((ids) => [...new Set(ids)]),
+    /** Service sections hidden from the website (CMS → Services). */
+    hiddenSections: z
+      .array(z.enum(CATEGORIES))
+      .max(CATEGORIES.length * 2)
+      .transform((sections) => [...new Set(sections)])
+      .default([]),
+    translations: translationsOf(settingsText).default({}),
   })
   .strict();
 

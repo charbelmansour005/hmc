@@ -3,6 +3,10 @@
 export const CATEGORIES = ["specialists", "nutrition", "dental", "esthetics", "movement"] as const;
 export type Category = (typeof CATEGORIES)[number];
 
+export function isCategory(value: unknown): value is Category {
+  return typeof value === "string" && (CATEGORIES as readonly string[]).includes(value);
+}
+
 export const SERVICE_DISPLAYS = ["card", "feature"] as const;
 export type ServiceDisplay = (typeof SERVICE_DISPLAYS)[number];
 

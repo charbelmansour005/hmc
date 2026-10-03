@@ -3,6 +3,9 @@
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { Map as MapboxMap } from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
+import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n/config";
+import { fmt } from "@/lib/i18n/format";
+import { useI18n } from "./I18nProvider";
 
 // The "Visit us" map: Mapbox Standard with its night light preset in dark mode
 // (day preset in light mode, following the theme toggle). mapbox-gl is only
@@ -10,6 +13,10 @@ import { useEffect, useRef, useState } from "react";
 // a tilted view of the clinic. Cooperative gestures keep page scrolling free
 // (zoom needs ⌘/Ctrl + scroll or two fingers). Without a token, or if Mapbox
 // fails to start, the previous Google embed is shown instead.
+//
+// On the French and Arabic pages the map's own labels follow the page's
+// language. The map itself always stays left-to-right (its controls and
+// attribution are laid out that way); only our popup follows the page.
 
 type LngLat = { lng: number; lat: number };
 
@@ -63,6 +70,9 @@ async function resolveLocation(query: string, token: string): Promise<LngLat> {
 
 const isDark = () => document.documentElement.getAttribute("data-theme") !== "light";
 
+/** Mapbox's plugin that joins and orders Arabic map labels; without it they render letter by letter. */
+const RTL_TEXT_PLUGIN = "https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-rtl-text/v0.3.0/mapbox-gl-rtl-text.js";
+
 /** The pin: brand-gradient teardrop with the "H" mark and a pulsing halo. */
 function createPin(label: string): HTMLElement {
   const pin = document.createElement("div");
@@ -75,27 +85,35 @@ function createPin(label: string): HTMLElement {
 }
 
 /** Popup content built with DOM nodes (the address comes from the CMS: never innerHTML). */
-function createPopup(place: string, center: LngLat): HTMLElement {
+function createPopup(
+  text: { clinic: string; directions: string; lang: Locale; dir: "ltr" | "rtl" },
+  place: string,
+  center: LngLat,
+): HTMLElement {
   const root = document.createElement("div");
   root.className = "map-popup";
+  root.lang = text.lang;
+  root.dir = text.dir;
   const title = document.createElement("strong");
-  title.textContent = "Hajj Medical Center";
+  title.textContent = text.clinic;
   const where = document.createElement("span");
   where.textContent = place;
   const link = document.createElement("a");
   link.href = `https://www.google.com/maps/dir/?api=1&destination=${center.lat},${center.lng}`;
   link.target = "_blank";
   link.rel = "noopener noreferrer";
-  link.textContent = "Get directions ↗";
+  link.textContent = text.directions;
   root.append(title, where, link);
   return root;
 }
 
-function GoogleEmbed({ query }: { query: string }) {
+function GoogleEmbed({ query, title, locale }: { query: string; title: string; locale: Locale }) {
+  // English keeps Google's own choice of language, as before.
+  const language = locale === DEFAULT_LOCALE ? "" : `&hl=${locale}`;
   return (
     <iframe
-      title={`Map of ${query}`}
-      src={`https://maps.google.com/maps?q=${encodeURIComponent(query)}&z=15&output=embed`}
+      title={title}
+      src={`https://maps.google.com/maps?q=${encodeURIComponent(query)}&z=15&output=embed${language}`}
       loading="lazy"
       referrerPolicy="no-referrer-when-downgrade"
     />
@@ -112,6 +130,7 @@ export function LocationMap({
   query: string;
   address: string | null;
 }) {
+  const { locale, dir, t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(!token);
   const [loaded, setLoaded] = useState(false);
@@ -136,6 +155,17 @@ export function LocationMap({
         const [{ default: mapboxgl }, center] = await Promise.all([import("mapbox-gl"), resolveLocation(query, token)]);
         if (cancelled) return;
 
+        if (dir === "rtl" && mapboxgl.getRTLTextPluginStatus() === "unavailable") {
+          // Lazy: fetched only once the map meets right-to-left text.
+          mapboxgl.setRTLTextPlugin(
+            RTL_TEXT_PLUGIN,
+            (error) => {
+              if (error) console.warn("[map] Arabic label support failed to load.", error);
+            },
+            true,
+          );
+        }
+
         const instance = new mapboxgl.Map({
           container: el,
           accessToken: token,
@@ -151,15 +181,21 @@ export function LocationMap({
           zoom: 12.6,
           cooperativeGestures: true,
           attributionControl: true,
+          // English keeps the style's own label language, as before.
+          ...(locale === DEFAULT_LOCALE ? {} : { language: locale }),
         });
         map = instance;
         instance.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), "top-right");
 
-        new mapboxgl.Marker({ element: createPin("Hajj Medical Center: show details"), anchor: "bottom" })
+        new mapboxgl.Marker({ element: createPin(fmt(t.map.pin, { clinic: t.clinic })), anchor: "bottom" })
           .setLngLat([center.lng, center.lat])
           .setPopup(
             new mapboxgl.Popup({ offset: 34, closeButton: false, maxWidth: "260px" }).setDOMContent(
-              createPopup(address ?? query, center),
+              createPopup(
+                { clinic: t.clinic, directions: t.map.directions, lang: locale, dir },
+                address ?? query,
+                center,
+              ),
             ),
           )
           .addTo(instance);
@@ -204,15 +240,17 @@ export function LocationMap({
       themeObserver?.disconnect();
       map?.remove();
     };
-  }, [token, query, address]);
+  }, [token, query, address, locale, dir, t]);
 
-  if (failed) return <GoogleEmbed query={query} />;
+  const title = fmt(t.map.region, { place: address ?? query });
+  if (failed) return <GoogleEmbed query={query} title={fmt(t.map.region, { place: query })} locale={locale} />;
   return (
     <div
       ref={containerRef}
       className={loaded ? "map-canvas is-loaded" : "map-canvas"}
+      dir="ltr"
       role="region"
-      aria-label={`Map of ${address ?? query}`}
+      aria-label={title}
     />
   );
 }

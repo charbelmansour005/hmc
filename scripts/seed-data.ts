@@ -806,4 +806,15 @@ export const seedSettings = {
   bookingChannel: "whatsapp" as const,
   whatsapp: null,
   googlePlaceIds: ["ChIJF7o0ARI_HxURCkCkKINPVC8"],
+  hiddenSections: [] as Category[],
+  translations: {
+    fr: {
+      address: "Rez-de-chaussée, immeuble 71, Green Zone A, Naccache",
+      openingHours: "Lun–Ven, 8h30 – 18h00 · Sam et dim fermé",
+    },
+    ar: {
+      address: "الطابق الأرضي، مبنى 71، Green Zone A، النقاش",
+      openingHours: "الإثنين–الجمعة، 8:30 ص – 6:00 م · السبت والأحد مغلق",
+    },
+  },
 };

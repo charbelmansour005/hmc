@@ -3,12 +3,13 @@ import { Types, type Model } from "mongoose";
 import { Clinic } from "@/models/Clinic";
 import { Service } from "@/models/Service";
 import { connectDB } from "./db";
-import { toClinicDTO } from "./dto";
+import { toClinicDTO, toClinicTranslations } from "./dto";
 import { bySortOrder } from "./home-content";
 import { assertObjectId, badRequest, notFound } from "./http";
 import type { ClinicCreateInput, ClinicUpdateInput } from "./schemas";
 import { uniqueSlug } from "./slug";
 import { deleteImage, plainImage, saveImage } from "./storage";
+import { mergeTranslations } from "./translations";
 import type { ClinicDTO } from "./types";
 import type { UploadedImage } from "./upload";
 
@@ -50,6 +51,7 @@ export async function createClinic(input: ClinicCreateInput, image: UploadedImag
       image: stored,
       service: new Types.ObjectId(input.serviceId),
       sortOrder: input.sortOrder,
+      translations: mergeTranslations(toClinicTranslations(undefined), input.translations),
     });
     return toClinicDTO(doc.toObject());
   } catch (err) {
@@ -79,6 +81,7 @@ export async function updateClinic(
   if (patch.sortOrder !== undefined) doc.sortOrder = patch.sortOrder;
   if (patch.serviceId !== undefined) doc.service = new Types.ObjectId(patch.serviceId);
   doc.image = stored ?? { ...plainImage(doc.image)!, alt };
+  doc.translations = mergeTranslations(toClinicTranslations(doc.toObject().translations), patch.translations);
 
   try {
     await doc.save();

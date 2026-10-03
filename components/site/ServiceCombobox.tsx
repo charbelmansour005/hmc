@@ -8,8 +8,13 @@ import {
   ComboboxOptions,
 } from "@headlessui/react";
 import { useMemo, useState } from "react";
+import { fmt } from "@/lib/i18n/format";
 import type { BookingOption } from "@/lib/types";
 import { useBooking } from "./BookingProvider";
+import { useI18n } from "./I18nProvider";
+
+/** Lower-cased and without accents or Arabic vowel marks, so "esthetique" finds "Esthétique". */
+const fold = (value: string) => value.normalize("NFD").replace(/\p{M}+/gu, "").toLowerCase();
 
 // Step-1 service picker. Replaces the native <select> with a searchable,
 // grouped combobox: 39 services across 5 categories, filterable by typing.
@@ -18,6 +23,7 @@ import { useBooking } from "./BookingProvider";
 // so light and dark themes are handled by the shared CSS.
 export function ServiceCombobox() {
   const booking = useBooking();
+  const { t } = useI18n();
   const [query, setQuery] = useState("");
 
   const selected = useMemo(() => {
@@ -28,13 +34,16 @@ export function ServiceCombobox() {
     return null;
   }, [booking.groups, booking.serviceId]);
 
-  const q = query.trim().toLowerCase();
+  const q = fold(query.trim());
   const groups = useMemo(() => {
     if (!q) return booking.groups;
+    // A service is also found by its English name, whatever the page's language.
     return booking.groups
       .map((group) => ({
         ...group,
-        options: group.options.filter((option) => option.label.toLowerCase().includes(q)),
+        options: group.options.filter(
+          (option) => fold(option.label).includes(q) || fold(option.labelEn).includes(q),
+        ),
       }))
       .filter((group) => group.options.length > 0);
   }, [booking.groups, q]);
@@ -53,14 +62,14 @@ export function ServiceCombobox() {
         <ComboboxInput
           id="service"
           className={"input combo-input" + (hasError ? " is-error" : "")}
-          placeholder="Choose a service"
+          placeholder={t.booking.servicePlaceholder}
           autoComplete="off"
           spellCheck={false}
-          aria-label="Service"
+          aria-label={t.booking.service}
           displayValue={(option: BookingOption | null) => option?.label ?? ""}
           onChange={(event) => setQuery(event.target.value)}
         />
-        <ComboboxButton className="combo-arrow" aria-label="Show services">
+        <ComboboxButton className="combo-arrow" aria-label={t.booking.showServices}>
           <svg width="12" height="8" viewBox="0 0 12 8" aria-hidden="true">
             <path
               d="M1 1.5l5 5 5-5"
@@ -74,7 +83,7 @@ export function ServiceCombobox() {
         </ComboboxButton>
         <ComboboxOptions anchor="bottom start" transition className="combo-options">
           {groups.length === 0 ? (
-            <div className="combo-empty">No services match “{query.trim()}”.</div>
+            <div className="combo-empty">{fmt(t.booking.noMatch, { query: query.trim() })}</div>
           ) : (
             groups.map((group) => (
               <div className="combo-group" key={group.label}>

@@ -5,6 +5,5 @@ import { getHomeContent } from "@/lib/home";
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
-  const content = await getHomeContent();
-  return <HomePage content={content} />;
+  return <HomePage locale="ar" content={await getHomeContent("ar")} />;
 }

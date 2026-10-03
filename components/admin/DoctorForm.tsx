@@ -3,9 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ACCENT_LABELS, ACCENTS, type Accent } from "@/lib/categories";
+import { TRANSLATION_LOCALES, type TranslationLocale } from "@/lib/i18n/config";
 import type { DoctorDTO } from "@/lib/types";
 import { sendMultipart, type FieldErrors } from "./api";
 import { ImageField } from "./ImageField";
+import { TranslationsCard, translationValues, type TranslationField } from "./TranslationsCard";
 import { buttonClass, Card, Field, inputClass, Notice } from "./ui";
 
 const ACCENT_TEXT: Record<Accent, string> = {
@@ -23,6 +25,9 @@ export function DoctorForm({ doctor }: { doctor: DoctorDTO | null }) {
   const [accent, setAccent] = useState<Accent>(doctor?.accent ?? "teal");
   const [photoAlt, setPhotoAlt] = useState(doctor?.photo?.alt ?? "");
   const [sortOrder, setSortOrder] = useState(String(doctor?.sortOrder ?? 100));
+  const [translations, setTranslations] = useState(() =>
+    translationValues(doctor?.translations, ["name", "specialty", "bio", "photoAlt"]),
+  );
   const [photo, setPhoto] = useState<File | null>(null);
   const [removePhoto, setRemovePhoto] = useState(false);
   const [fields, setFields] = useState<FieldErrors>({});
@@ -42,6 +47,20 @@ export function DoctorForm({ doctor }: { doctor: DoctorDTO | null }) {
       photoAlt: photoAlt || null,
       sortOrder: Number(sortOrder),
       ...(doctor && removePhoto && !photo ? { removePhoto: true } : {}),
+      translations: Object.fromEntries(
+        TRANSLATION_LOCALES.map((locale) => {
+          const text = translations[locale];
+          return [
+            locale,
+            {
+              name: text.name || null,
+              specialty: text.specialty || null,
+              bio: text.bio || null,
+              photoAlt: text.photoAlt || null,
+            },
+          ];
+        }),
+      ),
     };
     const result = doctor
       ? await sendMultipart<DoctorDTO>(`/api/admin/doctors/${doctor.id}`, "PATCH", payload, photo)
@@ -57,6 +76,16 @@ export function DoctorForm({ doctor }: { doctor: DoctorDTO | null }) {
   };
 
   const err = (key: string) => fields[key];
+
+  const onTranslation = (locale: TranslationLocale, key: string, value: string) =>
+    setTranslations((prev) => ({ ...prev, [locale]: { ...prev[locale], [key]: value } }));
+
+  const translationFields: TranslationField[] = [
+    { key: "name", label: "Name", english: name, maxLength: 80 },
+    { key: "specialty", label: "Specialty", english: specialty, maxLength: 60 },
+    { key: "bio", label: "Short bio", english: bio, maxLength: 160, multiline: true },
+    { key: "photoAlt", label: "Photo description (alt text)", english: photoAlt, maxLength: 140 },
+  ];
 
   return (
     <form onSubmit={onSubmit} noValidate className="grid gap-6">
@@ -113,6 +142,8 @@ export function DoctorForm({ doctor }: { doctor: DoctorDTO | null }) {
           <input id="sortOrder" type="number" min={0} max={9999} className={`${inputClass} max-w-40`} value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} />
         </Field>
       </Card>
+
+      <TranslationsCard fields={translationFields} values={translations} onChange={onTranslation} error={err} />
 
       <div className="flex flex-wrap gap-3">
         <button type="submit" className={buttonClass.primary} disabled={busy}>

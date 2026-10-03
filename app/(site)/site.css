@@ -165,8 +165,11 @@ main, .site-header, .site-footer { position: relative; z-index: 1; }
 
 /* Clinic logo (components/site/HmcLogo.tsx): the theme tokens colour the text,
    so it follows dark/light; the icons keep the brand gradient. */
-.hmc-logo { display: block; overflow: visible; }
-.hmc-logo text { font-family: var(--font-sans); }
+/* The logo is never translated or mirrored: without `direction: ltr` its SVG
+   text would anchor at the other end in a right-to-left page. */
+.hmc-logo { display: block; overflow: visible; direction: ltr; }
+/* Inter in every language (the Arabic page has other text faces). */
+.hmc-logo text { font-family: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 .hmc-ink { fill: var(--color-ink); }
 .hmc-ink-2 { fill: var(--color-ink-2); }
 .hmc-accent { fill: var(--color-teal); }
@@ -196,7 +199,7 @@ main, .site-header, .site-footer { position: relative; z-index: 1; }
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 
 .nav-phone {
@@ -213,7 +216,7 @@ main, .site-header, .site-footer { position: relative; z-index: 1; }
 .nav-phone:hover { color: var(--color-teal); }
 .nav-phone svg { width: 16px; height: 16px; color: var(--color-teal); }
 
-.nav-cta { margin-right: 4px; }
+.nav-cta { margin-inline-end: 4px; }
 
 .nav-toggle {
   display: none;
@@ -354,7 +357,7 @@ html.menu-open { overflow: hidden; }
   padding: 0;
   list-style: none;
 }
-.directory li + li { border-left: 1px solid var(--color-line); }
+.directory li + li { border-inline-start: 1px solid var(--color-line); }
 .directory a {
   display: grid;
   grid-template-rows: auto 1fr auto;
@@ -415,12 +418,13 @@ textarea.input { height: auto; min-height: 48px; padding: 13px 16px; resize: ver
 .select {
   appearance: none;
   -webkit-appearance: none;
-  padding-right: 42px;
+  padding-inline-end: 42px;
   cursor: pointer;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%236a7885' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 16px center;
 }
+[dir="rtl"] .select { background-position: left 16px center; }
 .select:invalid,
 .select.is-placeholder { color: #93a0a8; }
 .select option { color: var(--color-ink); }
@@ -515,7 +519,7 @@ textarea.input { height: auto; min-height: 48px; padding: 13px 16px; resize: ver
 .chip {
   position: absolute;
   top: 12px;
-  left: 12px;
+  inset-inline-start: 12px;
   z-index: 1;
   padding: 4px 10px;
   border-radius: var(--radius-pill);
@@ -905,7 +909,7 @@ textarea.input { height: auto; min-height: 48px; padding: 13px 16px; resize: ver
   font-size: 13px;
   font-style: normal;
   color: var(--color-ink-2);
-  text-align: right;
+  text-align: end;
   /* A long address wraps instead of squeezing the links column. */
   justify-self: end;
   max-width: 290px;
@@ -981,7 +985,7 @@ textarea.input { height: auto; min-height: 48px; padding: 13px 16px; resize: ver
 
   /* The directory becomes a list: name and count on one line, contents below. */
   .directory ul { grid-auto-flow: row; margin: 0; }
-  .directory li + li { border-left: 0; border-top: 1px solid var(--color-line); }
+  .directory li + li { border-inline-start: 0; border-top: 1px solid var(--color-line); }
   .directory a {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-rows: none;
@@ -1001,7 +1005,7 @@ textarea.input { height: auto; min-height: 48px; padding: 13px 16px; resize: ver
   .nav { gap: 12px; }
   .nav-actions { gap: 2px; }
   .brand .hmc-logo { height: 38px; }
-  .nav-cta { margin-right: 2px; padding: 0 14px; }
+  .nav-cta { margin-inline-end: 2px; padding: 0 14px; }
 
   .hero { padding-top: 20px; }
   .hero h1 { font-size: clamp(36px, 10.5vw, 46px); line-height: 1.05; }
@@ -1037,7 +1041,7 @@ textarea.input { height: auto; min-height: 48px; padding: 13px 16px; resize: ver
 
   .footer-card { grid-template-columns: 1fr; gap: 18px; padding: 22px; }
   .footer-links { grid-row: auto; }
-  .footer-contact { justify-self: start; text-align: left; }
+  .footer-contact { justify-self: start; text-align: start; }
 }
 
 /* ------------------------------------------------------------------------
@@ -1058,9 +1062,10 @@ textarea.input { height: auto; min-height: 48px; padding: 13px 16px; resize: ver
 
 .btn[disabled] { opacity: 0.7; cursor: progress; }
 
+/* Off the start edge: on the end edge it would add 10000px of sideways scroll. */
 .honeypot {
   position: absolute !important;
-  left: -10000px;
+  inset-inline-start: -10000px;
   width: 1px;
   height: 1px;
   overflow: hidden;
@@ -1155,12 +1160,12 @@ textarea.input { height: auto; min-height: 48px; padding: 13px 16px; resize: ver
 /* The input reuses .input, so its light/dark styling is already handled;
    the popover uses tokens, so it themes automatically too. */
 .combo { position: relative; }
-.combo-input { padding-right: 42px; cursor: text; }
+.combo-input { padding-inline-end: 42px; cursor: text; }
 
 .combo-arrow {
   position: absolute;
   top: 0;
-  right: 0;
+  inset-inline-end: 0;
   width: 42px;
   height: 48px;
   display: grid;
@@ -1223,8 +1228,8 @@ textarea.input { height: auto; min-height: 48px; padding: 13px 16px; resize: ver
   position: relative;
   display: flex;
   align-items: center;
-  padding-right: 42px;
-  text-align: left;
+  padding-inline-end: 42px;
+  text-align: start;
   cursor: pointer;
 }
 .listbox-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1391,6 +1396,11 @@ textarea.input { height: auto; min-height: 48px; padding: 13px 16px; resize: ver
   background: linear-gradient(90deg, var(--color-teal), var(--color-mint) 55%, var(--color-blue));
   pointer-events: none;
 }
+/* Right-to-left pages fill from the right. */
+[dir="rtl"] .scroll-progress {
+  transform-origin: 100% 50%;
+  background: linear-gradient(270deg, var(--color-teal), var(--color-mint) 55%, var(--color-blue));
+}
 
 /* Nav pill that glides to the section being read. */
 .nav-pill {
@@ -1493,9 +1503,11 @@ textarea.input { height: auto; min-height: 48px; padding: 13px 16px; resize: ver
 }
 .stars svg { display: block; width: 90px; height: 18px; fill: currentColor; }
 .stars-empty { display: block; color: rgba(20, 50, 80, 0.14); }
+/* Anchored at the start edge, so the stars fill from the right in Arabic. */
 .stars-filled {
   position: absolute;
-  inset: 0 auto 0 0;
+  inset-block: 0;
+  inset-inline: 0 auto;
   overflow: hidden;
   color: #f4b400;
 }
@@ -1680,6 +1692,117 @@ a.review-author:hover { color: var(--color-teal); }
   .reviews-nav { display: none; }
   .review { padding: 20px 18px 18px; }
 }
+
+/* ------------------------------------------------------------------------
+   Languages. The site is one page in English (/), French (/fr) and Arabic
+   (/ar, right-to-left). Layout needs nothing here: the rules above use
+   logical properties (inline-start/end), which follow the page's direction.
+   ------------------------------------------------------------------------ */
+
+/* Header language menu (components/site/LanguageSwitcher.tsx). */
+.lang-toggle {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 42px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-ink-2);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.lang-toggle:hover,
+.lang-toggle[data-open] { background: var(--color-teal-soft); color: var(--color-teal); }
+.lang-toggle svg { width: 18px; height: 18px; }
+/* The list shares the booking dropdowns' look; it is as wide as its longest name. */
+.lang-menu { width: auto; min-width: 170px; }
+.lang-option { display: block; }
+.lang-option[aria-current] { font-weight: 600; color: var(--color-teal); }
+
+/* The same choice as a row of links: at the top of the phone menu… */
+.nav-menu .nav-languages ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 14px 0 10px;
+}
+.nav-menu .nav-languages a {
+  padding: 8px 16px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--color-ink-2);
+}
+.nav-menu .nav-languages a[aria-current] {
+  border-color: transparent;
+  background: var(--color-teal-soft);
+  color: var(--color-teal);
+}
+/* …and in the footer. */
+.footer-languages ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.footer-languages a:hover { color: var(--color-teal); }
+.footer-languages a[aria-current] { font-weight: 600; color: var(--color-ink-2); }
+
+/* The phone bar has no room for the menu button; its menu sheet has the row. */
+@media (max-width: 640px) {
+  .lang-toggle { display: none; }
+}
+
+/* A phone number is typed left to right in any language; in an Arabic form it
+   still lines up with the other fields. */
+[dir="rtl"] .input[type="tel"] { direction: ltr; text-align: right; }
+
+/* Arabic type (app/fonts-arabic.ts): Beiruti for headings in place of the
+   serif, Readex Pro for text in place of Inter. Arabic reads smaller than
+   Latin at the same size and needs more room between lines; and its letters
+   join, so tracking is never applied. */
+:root[lang="ar"] {
+  --font-serif: var(--font-arabic-display), var(--font-arabic-text), system-ui, sans-serif;
+  --font-sans: var(--font-arabic-text), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+:root[lang="ar"] body { font-size: 16px; line-height: 1.75; }
+:root[lang="ar"] :is(h1, h2, h3, h4, .btn, .nav-menu li a, .directory-name, .combo-group-label) { letter-spacing: 0; }
+/* Beiruti is condensed and its word space is narrow: open the words up a little
+   (not the phone number and language names in the phone menu, which are text-face). */
+:root[lang="ar"] :is(h1, h2, h3, h4, .nav-menu li a, .directory-name) { word-spacing: 0.16em; }
+:root[lang="ar"] .nav-menu :is(.nav-menu-phone, .nav-languages) a { word-spacing: normal; }
+/* The headline: heavier and larger than the Latin serif, in balanced lines. */
+:root[lang="ar"] .hero h1 {
+  max-width: none;
+  font-size: clamp(46px, 6.3vw, 94px);
+  font-weight: 700;
+  line-height: 1.16;
+  text-wrap: balance;
+}
+:root[lang="ar"] .section-head h2 { font-weight: 700; line-height: 1.25; }
+:root[lang="ar"] .directory-name { line-height: 1.35; }
+:root[lang="ar"] .nav-menu li a { line-height: 1.5; }
+@media (max-width: 640px) {
+  :root[lang="ar"] .hero h1 { font-size: clamp(40px, 11.6vw, 50px); line-height: 1.2; }
+  /* Keeps the menu button on screen on 360px-wide phones. */
+  :root[lang="ar"] .nav-cta { padding: 0 12px; }
+}
+/* The logo is the same in every language, so it takes none of the above: in
+   the footer it sits inside a heading, and keeps the tracking it inherits
+   there on the other pages (-0.015em of their 15px text). */
+:root[lang="ar"] .hmc-logo { word-spacing: 0; }
+:root[lang="ar"] .footer-brand .hmc-logo { letter-spacing: -0.225px; }
 
 /* Sections focused after keyboard navigation don't need a focus ring. */
 [tabindex="-1"]:focus { outline: none; }

@@ -4,13 +4,14 @@ import { Clinic } from "@/models/Clinic";
 import { Service, type ServiceDoc } from "@/models/Service";
 import { CATEGORIES, CATEGORY_META } from "./categories";
 import { connectDB } from "./db";
-import { toServiceDTO } from "./dto";
+import { toServiceDTO, toServiceTranslations } from "./dto";
 import { bySortOrder } from "./home-content";
 import { assertObjectId, badRequest, conflict, notFound, type FieldErrors } from "./http";
 import type { ServiceCreateInput, ServiceUpdateInput } from "./schemas";
 import { uniqueSlug } from "./slug";
 import { deleteImage, plainImage, saveImage } from "./storage";
-import type { ServiceDTO } from "./types";
+import { mapTranslations, mergeTranslations } from "./translations";
+import type { ServiceDTO, ServiceText, Translations } from "./types";
 import type { UploadedImage } from "./upload";
 
 const categoryIndex = (c: ServiceDTO["category"]) => CATEGORIES.indexOf(c);
@@ -74,6 +75,10 @@ async function validateService(merged: ServiceFields, selfId: string | null): Pr
   }
 }
 
+/** Like the English tags, translated tags only exist on feature cards. */
+const tagsFor = (display: ServiceDoc["display"], translations: Translations<ServiceText>) =>
+  mapTranslations(translations, (copy) => ({ ...copy, tags: display === "feature" ? copy.tags : [] }));
+
 export async function createService(input: ServiceCreateInput, image: UploadedImage | null): Promise<ServiceDTO> {
   if (!image) throw badRequest("Please check the highlighted fields.", { image: "An image is required." });
   await connectDB();
@@ -94,6 +99,7 @@ export async function createService(input: ServiceCreateInput, image: UploadedIm
       image: stored,
       bookAs: input.bookAsId ? new Types.ObjectId(input.bookAsId) : null,
       sortOrder: input.sortOrder,
+      translations: tagsFor(input.display, mergeTranslations(toServiceTranslations(undefined), input.translations)),
     });
     return toServiceDTO(doc.toObject());
   } catch (err) {
@@ -135,6 +141,10 @@ export async function updateService(
   doc.tags = merged.display === "feature" ? merged.tags : [];
   doc.bookAs = merged.bookAsId ? new Types.ObjectId(merged.bookAsId) : null;
   doc.image = stored ?? { ...plainImage(doc.image)!, alt };
+  doc.translations = tagsFor(
+    merged.display,
+    mergeTranslations(toServiceTranslations(doc.toObject().translations), patch.translations),
+  );
 
   try {
     await doc.save();
