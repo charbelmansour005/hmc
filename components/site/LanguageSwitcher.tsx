@@ -43,13 +43,15 @@ function linkProps(target: Locale, current: Locale) {
 /** The header's language menu (wider screens). */
 export function LanguageMenu() {
   const { locale, t } = useI18n();
+  // Not modal: a modal menu locks the page's scroll while it is open, which a
+  // small dropdown doesn't need.
   return (
     <Menu>
       <MenuButton className="lang-toggle" aria-label={`${t.nav.language}: ${LOCALE_NAMES[locale]}`}>
         <GlobeIcon aria-hidden />
         <span aria-hidden="true">{locale.toUpperCase()}</span>
       </MenuButton>
-      <MenuItems anchor="bottom end" transition className="combo-options lang-menu">
+      <MenuItems modal={false} anchor="bottom end" transition className="combo-options lang-menu">
         {LOCALES.map((target) => (
           <MenuItem key={target}>
             <a className="combo-option lang-option" {...linkProps(target, locale)}>

@@ -34,7 +34,10 @@ body {
   color: var(--color-ink);
   background: var(--color-bg);
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  /* clip, not hidden: hidden makes <body> its own scroll box as soon as the
+     page's scroll is locked (overflow: hidden on <html>, e.g. html.menu-open),
+     and the sticky header then jumps back to the top of the page, off-screen. */
+  overflow-x: clip;
 }
 
 img { display: block; max-width: 100%; }
